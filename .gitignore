@@ -1,0 +1,4 @@
+/PyTorch/.idea/*
+/PyTorch/data/*
+/PyTorch/model/*
+/PyTorch/*.pyc

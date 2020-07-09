@@ -1,6 +1,6 @@
 import os
 import time
-
+import random
 import requests
 import io
 from zipfile import ZipFile
@@ -21,6 +21,12 @@ from IPython.display import HTML
 from DCGAN.config import DCGAN_Config
 from DCGAN.network import Generator, Discriminator
 
+# Set random seed for reproducibility
+manualSeed = 999
+#manualSeed = random.randint(1, 10000) # use if you want new results
+random.seed(manualSeed)
+torch.manual_seed(manualSeed)
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -40,7 +46,8 @@ class DCGAN(object):
         self.beta1 = config['beta1']
         self.batch_size = config['batch_size']
 
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+        print(self.device)
         self.real_data_loader = self._get_real_data()
         self.generator, self.discriminator = self._init_network()
 
@@ -97,14 +104,14 @@ class DCGAN(object):
                 nn.init.constant_(m.bias.data, 0.0)
 
         generator = Generator(DCGAN_Config).to(self.device)
-        generator.apply(init_weights)
-
         discriminator = Discriminator(DCGAN_Config).to(self.device)
-        discriminator.apply(init_weights)
-
+        
         if self.device.type =='cuda' and DCGAN_Config['ngpu']>1:
             generator = nn.DataParallel(generator, list(range(DCGAN_Config['ngpu'])))
             discriminator = nn.DataParallel(discriminator, list(range(DCGAN_Config['ngpu'])))
+
+        generator.apply(init_weights)
+        discriminator.apply(init_weights)
 
         print(generator)
         print(discriminator)

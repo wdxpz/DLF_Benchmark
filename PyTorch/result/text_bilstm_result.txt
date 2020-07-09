@@ -1,0 +1,18 @@
+
+training results: 
+
+ total training time: 	 239.07821393013
+testing results: 
+ accuracy on 25000 test reviews: 0.852, total time: 5.616559028625488 s
+
+training results: 
+
+ total training time: 	 251.29007744789124
+testing results: 
+ accuracy on 25000 test reviews: 0.850, total time: 5.994560956954956 s
+
+training results: 
+
+ total training time: 	 253.999582529068
+testing results: 
+ accuracy on 25000 test reviews: 0.851, total time: 6.061451435089111 s

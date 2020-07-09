@@ -1,0 +1,33 @@
+
+
+training config: 
+ {'num_worker': 1, 'batch_size': 64, 'learning_rate': 0.0001, 'epoch': 30, 'print_every': 100, 'save_every': 10000}
+training results: 
+
+ total training time: 	 1504.3561775684357
+ final average training lostt: 	 2.846
+ final average training accuracy: 	59.047
+testing results: 
+ accuracy on 10000 test images: 0.771, total time: 2.1074414253234863 s
+
+
+training config: 
+ {'num_worker': 1, 'batch_size': 64, 'learning_rate': 0.0001, 'epoch': 30, 'print_every': 100, 'save_every': 10000}
+training results: 
+
+ total training time: 	 1527.393413066864
+ final average training lostt: 	 3.924
+ final average training accuracy: 	58.688
+testing results: 
+ accuracy on 10000 test images: 0.761, total time: 2.1543519496917725 s
+
+
+training config: 
+ {'num_worker': 1, 'batch_size': 64, 'learning_rate': 0.0001, 'epoch': 30, 'print_every': 100, 'save_every': 10000}
+training results: 
+
+ total training time: 	 1567.164258480072
+ final average training lostt: 	 3.348
+ final average training accuracy: 	58.984
+testing results: 
+ accuracy on 10000 test images: 0.754, total time: 2.1226840019226074 s

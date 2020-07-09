@@ -38,7 +38,7 @@ class TextClassifier(object):
         self.print_every = config['print_every']
 
         #device
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
         # network
         self.net, self.tokenizer, self.bert_config = self._init_network()
         print(self.net, self.tokenizer, self.bert_config)

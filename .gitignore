@@ -1,3 +1,4 @@
+.vscode/
 /PyTorch/.idea/*
 /PyTorch/data/*
 /PyTorch/model/*

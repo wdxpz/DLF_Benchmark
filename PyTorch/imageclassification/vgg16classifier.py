@@ -34,7 +34,7 @@ def init(config):
 
     print('Loading testing dataset ...')
     CIFAR_test_set = torchvision.datasets.CIFAR10(DATA_DIR, train=False, transform=transform, download=True)
-    CIFAR_test_loader = torch.utils.data.DataLoader(CIFAR_test_set, batch_size=config['batch_size'], shuffle=True,
+    CIFAR_test_loader = torch.utils.data.DataLoader(CIFAR_test_set, batch_size=config['batch_size']*2, shuffle=False,
                                                     num_workers=config['num_worker'])
 
     # CIFAR_train_loader = [(data[0].to(device), data[1].to(device)) for _, data in enumerate(CIFAR_train_loader)]

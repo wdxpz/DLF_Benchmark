@@ -37,7 +37,7 @@ class TextClassifier(object):
         self.print_every = config['print_every']
 
         #device
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
         #data
         self.train_data, self.test_data, self.vocab_size, self.label_size = self._init_data()
         #network
@@ -114,6 +114,7 @@ class TextClassifier(object):
 
 
     def _train_func(self, batch, criterion, optimizer):
+        self.net.train()
         optimizer.zero_grad()
 
         text, text_length, labels = batch.text[0], batch.text[1], batch.label
@@ -138,7 +139,7 @@ class TextClassifier(object):
 
         start_time = time.time()
         with torch.no_grad():
-            for i, batch in enumerate(self.train_data):
+            for i, batch in enumerate(self.test_data):
                 text, text_length, labels = batch.text[0], batch.text[1], batch.label
                 # text, text_length, labels = text.to(self.device), text_length.to(self.device), labels.to(self.device)
 

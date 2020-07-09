@@ -1,5 +1,8 @@
 from textclassify_bilstm.textclassifier import TextClassifier
 
-classifier = TextClassifier()
-classifier.train()
-classifier.test()
+num_repeat = 3
+
+for i in range(num_repeat):
+    classifier = TextClassifier()
+    classifier.train()
+    classifier.test()

@@ -3,3 +3,8 @@
 /PyTorch/data/*
 /PyTorch/model/*
 /PyTorch/*.pyc
+/Notebook/checkpoints/*
+/Notebook/dataset/*
+/Notebook/.idea/*
+/Notebook/.ipynb_checkpoints/*
+

@@ -94,3 +94,37 @@ cd /path-to-DLF_Benchmark
 docker-compose up -d
 docker-compose exec dlf_benchmark_container bash
 ```
+
+# Pytorch CycleGAN
+1. it is a key to set `--no_dropout' for train(it is deaultly set) and test(need manually set)
+
+2. to train the model, just use the deault parameters, set the additional dataroot, and model store dir
+```
+#`base_options`
+parser.add_argument('--dataroot', type=str, default=DATA_DIR, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
+parser.add_argument('--name', type=str, default='horse2zebra', ....)
+parser.add_argument('--checkpoints_dir', type=str, default=MODEL_DIR, help='models are saved here')
+```
+
+3. to test, and generated fake picutres
+    * set the `--no_dropout' and `dataroot` in the opt parameters in func `test()` in `test.py`
+    ```
+    opt.no_dropout = True
+    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/B")
+    ```
+
+    * Once your model has trained, copy over the last checkpoint to a format that the testing model can automatically detect:
+    if you want to transform images from class A to class B:
+    ```
+    cp ./checkpoints/horse2zebra/latest_net_G_A.pth ./checkpoints/horse2zebra/latest_net_G.pth
+
+    #in test.py
+    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/A")
+    ```
+
+    if you want to transform images from class B to class A.
+    ```
+    cp ./checkpoints/horse2zebra/latest_net_G_B.pth ./checkpoints/horse2zebra/latest_net_G.pth 
+    #in test.py
+    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/B")
+    ```

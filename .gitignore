@@ -1,7 +1,6 @@
 .vscode/
 /PyTorch/.idea/*
 /PyTorch/data/*
-/PyTorch/model/*
 /PyTorch/*.pyc
 /Notebook/checkpoints/*
 /Notebook/dataset/*

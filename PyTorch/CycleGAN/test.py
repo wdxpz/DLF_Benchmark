@@ -38,7 +38,7 @@ def test():
     opt = TestOptions().parse()  # get test options
 
     opt.no_dropout = True
-    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/B")
+    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/A")
 
     # hard-code some parameters for test
     opt.num_threads = 1   # test code only supports num_threads = 1

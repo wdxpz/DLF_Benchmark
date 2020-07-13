@@ -1,7 +1,7 @@
 version: '2.3'
 services:
-  dlf_benchmark_container:
-    image: "dlf_benchmark"
+  dlf_benchmark_tf_container:
+    image: "tensorflow/tensorflow"
     volumes:
       - /home/si/DLF_Benchmark:/workspace:cached
     network_mode: "host"

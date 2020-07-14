@@ -1,6 +1,6 @@
 version: '2.3'
 services:
-  dlf_benchmar_torchk_container:
+  dlf_benchmark_torch_container:
     image: "dlf_benchmark_torch"
     volumes:
       - /home/si/DLF_Benchmark:/workspace:cached
@@ -8,4 +8,4 @@ services:
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-
+    command: /bin/sh -c "while sleep 1000; do :; done"

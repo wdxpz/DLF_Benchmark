@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:latest
+FROM tensorflow/tensorflow:latest-gpu
 
 #install robotmaster requirements
-RUN pip install pandas matplotlib jupyter dominate 
+RUN pip install matplotlib 

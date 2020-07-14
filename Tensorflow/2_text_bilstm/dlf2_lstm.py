@@ -12,7 +12,7 @@ import time
 BATCH_SIZE = 64
 EPOCHS = 20
 VOCAB_SIZE = 32650  # 单词表长度
-MAXLEN = 2000       # 评论的长度，超过截断
+MAXLEN = 128       # 评论的长度，超过截断
 EMBED_DIM = 64
 
 # load dataset
@@ -64,7 +64,7 @@ test_loss, test_acc = model.evaluate(
 print('On test set: loss - %.5f, acc - %.5f' % (test_loss, test_acc))
 print('Total test time: %.3f' % (time.clock() - start_test))
 
-'''
+
 model.save('models/dlf2.h5')
 
 # plt draw pics
@@ -89,4 +89,3 @@ plt.title('Training and validation accuracy')
 plt.legend()
 
 plt.savefig('pics/dlf2.png')
-'''

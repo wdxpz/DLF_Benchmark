@@ -3,12 +3,16 @@ import time
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 
 from .config import DCGAN_Config
 from .network import make_generator_model, make_discriminator_model 
 
+
 # Set random seed for reproducibility
-seed = tf.random.normal([DCGAN_Config['num_examples_to_generate'], DCGAN_Config['nz']])
+# seed = tf.random.normal([DCGAN_Config['num_examples_to_generate'], DCGAN_Config['nz']])
+tf.random.set_seed(999)
+seed = tf.random.normal([DCGAN_Config['num_examples_to_generate'], 1, 1, DCGAN_Config['nz']])
 cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 
@@ -77,21 +81,30 @@ class DCGAN_TF(object):
         return cross_entropy(tf.ones_like(fake_output), fake_output)
 
     @staticmethod
-    def generate_and_save_images(model, epoch, test_input):
+    def generate_and_save_images(filename, model, epoch, test_input):
         # 注意 training` 设定为 False
         # 因此，所有层都在推理模式下运行（batchnorm）。
         predictions = model(test_input, training=False)
 
-        fig = plt.figure(figsize=(8,8))
+        nrow = 8
+        ncol = 8
+
+        fig = plt.figure(figsize=(ncol+1, nrow+1)) 
+        gs = gridspec.GridSpec(nrow, ncol,
+                wspace=0.0, hspace=0.0, 
+                top=1.-0.5/(nrow+1), bottom=0.5/(nrow+1), 
+                left=0.5/(ncol+1), right=1-0.5/(ncol+1)) 
 
         for i in range(predictions.shape[0]):
-            plt.subplot(8, 8, i+1)
-            plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            ax= plt.subplot(gs[i//8, i%8])
+            ax.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
             plt.axis('off')
-        plt.subplots_adjust(wspace=0, hspace=0)
+        #     plt.subplot(8, 8, i+1)
+        #     plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')    
+        # plt.subplots_adjust(wspace=0, hspace=0)
 
-        plt.savefig(os.path.join(RESULT_DIR, 'dcgan_tf_image_at_epoch_{:04d}.png'.format(epoch)), bbox_inches = 'tight', pad_inches = 0)
-        plt.show()
+        plt.savefig(filename, bbox_inches = 'tight', pad_inches = 0)
+        # plt.show()
 
     @tf.function
     def train_step(self, images):
@@ -111,27 +124,57 @@ class DCGAN_TF(object):
 
         self.generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
         self.discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+        
+        return gen_loss, disc_loss
 
     def train(self):
-        for epoch in range(self.num_epochs):
-            start = time.time()
+        G_losses=[]
+        D_losses=[]
+        start_time = time.time()
+        for epoch in range(self.num_epochs):     
+            i = 0
 
             for image_batch in self.real_data_loader:
+                i += 1
                 image_batch = tf.image.resize(image_batch, [64, 64])
-                print('taining set size after resize: {}'.format(image_batch.shape))
                 image_batch = (image_batch - 127.5) / 127.5 # normalized to [-1, 1]
-                self.train_step(image_batch)
-       
-            self.generate_and_save_images(self.generator, epoch + 1, seed)
+                errD, errG = self.train_step(image_batch)
+                filename = os.path.join(RESULT_DIR, 'minst_dcgan_tf_epoch_{}_batch_{}.png'.format(epoch, i))
+                # self.generate_and_save_images(filename, self.generator, epoch + 1, seed)
+
+                #Output training stats
+                if (i%50) == 0:
+                    print('epoch:[{}/{}] batch:[{}]\t Loss_D: {:.4f}\t Loss_G: {:.4f}'.format(
+                        epoch, self.num_epochs, i,
+                        errD, errG))
+
+                if epoch == self.num_epochs-1 :
+                    #save losses for plotting later
+                    G_losses.append(errG)
+                    D_losses.append(errD)
+
+            if (epoch%5) ==0:
+                filename = os.path.join(RESULT_DIR, 'minst_dcgan_tf_epoch_{}.png'.format(epoch))
+                self.generate_and_save_images(filename, self.generator, epoch + 1, seed)
 
             # 每 15 个 epoch 保存一次模型
-            if (epoch + 1) % 15 == 0:
+            if (epoch + 1) % 10 == 0 or epoch == self.num_epochs-1:
                 self.checkpoint.save(file_prefix = self.checkpoint_prefix)
 
-            print ('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
+        total_time = time.time() - start_time
+        with open(RESULT_FILE, 'a') as f:
+            f.write(f'\n\ntraining results:')
+            f.write('\n total training time: \t {}'.format(total_time))
+            f.write('\n final average D_loss and G_loss: {:.4f} / {:.4f}'.format(
+                np.mean(tf.stack(D_losses)),
+                np.mean(tf.stack(G_losses))))
 
+        index = 0
+        while os.path.exists(os.path.join(RESULT_DIR, 'minst_dcgan_tf_epoch_{}_{}.png'.format(self.num_epochs, index))):
+            index += 1
+        imgname = os.path.join(RESULT_DIR, 'minst_dcgan_tf_epoch_{}_{}.png'.format(self.num_epochs, index))
         # 最后一个 epoch 结束后生成图片
-        self.generate_and_save_images(self.generator, epochs, seed)
+        self.generate_and_save_images(imgname, self.generator, epoch, seed)
 
 
 

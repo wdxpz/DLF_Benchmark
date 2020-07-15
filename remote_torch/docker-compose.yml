@@ -5,7 +5,8 @@ services:
     volumes:
       - /home/si/DLF_Benchmark:/workspace:cached
     network_mode: "host"
+    shm_size: '8gb'
     runtime: nvidia
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0
     command: /bin/sh -c "while sleep 1000; do :; done"

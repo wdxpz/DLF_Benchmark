@@ -69,26 +69,45 @@
 |33.21|99.85%|84.08%|19.183|82.66%|
 <br>
 <img src="imgs/dlf2.png" width="600"><br>
-(注：虚线为训练集，实线为验证集，从图像来看，存在过拟合问题)
+
+注：虚线为训练集，实线为验证集；  
+从图像来看，存在过拟合问题，可能因为没有采取正则化；  
+LSTM适于分析全局的长期性结构，在情感分析问题上表现得差一些。
 
 ### 模型 Bert Large Uncased 768-hidden
+* 用于预训练 NLP，无监督、深度双向模型
+    * per-training，基于大量文本做的无监督学习
+    * fine-tuning，用于具体任务时需要微调
 * 超参数设置
     * batch-size 32
     * 训练轮数 3
     * 优化器 AdamW，学习率 1e-5
     * ε 1e-8
     * MAX_SEQ_LENGTH 128
+* 参考
+    * 基于预训练部分做编码 encoding [链接](https://stackabuse.com/text-classification-with-bert-tokenizer-and-tf-2-0-in-python/)
+    * 数据[下载](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)
+* 问题：得到的数据为list类型，输入模型需要进一步处理。
 
 ## 3. Image Generation
 * 数据集 MNIST 手写数字识别
-    * 图像尺寸：1 x 64 x 46
+    * 图像尺寸：1 x 64 x 64
 * 数据处理
     * 归一化到 [-0.5, 0.5]
-* 模型 Dc-Gan
+### 模型 Dc-Gan
+* GANs，生成对抗网络，两个模型通过对抗过程同时训练
+    * 生成器，学习生成看起来真实的图像
+    * 判别器，学习区分真假图像
+    * 训练过程中，二者的能力都逐渐增强，直到判别器无法区分真实图片和伪造图片时，训练达到平衡。
 * 超参数设置
     * batch-size 64
     * 训练轮数 20
     * 优化器 Adam，学习率 2e-4，betas (0.5, 0.999)
+* 参考官方教程，[链接](https://www.tensorflow.org/tutorials/generative/dcgan?hl=zh-cn)
+* 问题：目前在colab运行，远程机报错  Could not create cudnn handle: CUDNN_STATUS_INTERNAL_ERROR, Aborted (core dumped)
+
+20轮训练以后得到的生成图像  
+<img src="imgs/dcgan.png">
 
 ## 4. Image Translation
 * 数据集 horse and zebra from ImageNet

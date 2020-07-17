@@ -1,3 +1,5 @@
+# keras实现，训练效果不好，超参数可能需要调整
+
 import keras
 from keras import layers
 import numpy as np
@@ -58,7 +60,8 @@ generator.summary()
 discriminator = build_discriminator()
 discriminator.summary()
 
-discriminator_optimizer = keras.optimizers.Adam(lr=ALPHA)
+# discriminator_optimizer = keras.optimizers.Adam(lr=ALPHA)
+discriminator_optimizer = keras.optimizers.RMSprop(lr=0.0008, clipvalue=1.0, decay=1e-8)
 discriminator.compile(
     optimizer=discriminator_optimizer,
     loss='binary_crossentropy'
@@ -70,7 +73,8 @@ gan_input = keras.Input(shape=(NOISE_DIM, ))
 gan_output = discriminator(generator(gan_input))
 gan = keras.models.Model(gan_input, gan_output)
 
-gan_optimizer = keras.optimizers.Adam(learning_rate=ALPHA)
+# gan_optimizer = keras.optimizers.Adam(learning_rate=ALPHA)
+gan_optimizer = keras.optimizers.RMSprop(lr=0.0004, clipvalue=1.0, decay=1e-8)
 gan.compile(
     optimizer=gan_optimizer,
     loss='binary_crossentropy'
@@ -79,9 +83,12 @@ gan.compile(
 
 # load dataset mnist
 (train_images, train_labels), (_, _) = keras.datasets.mnist.load_data()
-SAMPLES = train_images.shape[0]
-train_images = train_images.reshape(SAMPLES, 28, 28, 1).astype('float32')
+# SAMPLES = train_images.shape[0]
+train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
 train_images = (train_images - 127.5) / 255 # 将图片标准化到 [-0.5, 0.5] 区间内
+# choose a number, 5
+train_x = train_images[train_labels.flatten() == 5]
+SAMPLES = train_x.shape[0]
 
 seed = np.random.normal(size=(BATCH_SIZE, NOISE_DIM))
 
@@ -92,12 +99,10 @@ def generate_and_save_images(model, epoch):
         plt.subplot(8, 8, i+1)
         plt.imshow(predictions[i, :, :, 0]*255+127.5, cmap='gray')
         plt.axis('off')
-    plt.savefig('pics/image_at_epoch_{:04d}.png'.format(epoch))
+    plt.savefig('pics/image_at_epoch_{:02d}.png'.format(epoch))
 
 # iterations of batches in an epoch
 ITRS = SAMPLES // BATCH_SIZE
-
-start = time.clock()
 
 for ep in range(EPOCHS):
     start = 0
@@ -139,6 +144,3 @@ for ep in range(EPOCHS):
     print('gan loss: %.5f' % (total_a_loss/SAMPLES))
     # save a figure every epoch
     generate_and_save_images(generator, ep+1)
-
-
-print('Total training time: %.3f' % (time.clock() - start))

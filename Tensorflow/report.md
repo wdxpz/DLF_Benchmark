@@ -84,13 +84,13 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
     * 优化器 AdamW，学习率 1e-5，衰减参数 1e-6
     * MAX_SEQ_LENGTH 128
 
-<img src="imgs/bert1.png" width="480">
-
-* 网络结构：由于 Pytorch 直接使用了 huggingface 的模型，BertForSequenceClassification，此处对于 Tensorflow，采取上面所示的，自己设置的模型
+* 网络结构：由于 Pytorch 直接使用了 huggingface 的模型，BertForSequenceClassification，此处对于 Tensorflow，采取如下所示的，自己设置的模型
     * 加载预训练的 bert 分类器
     * 展开，加上一层全连接层
     * 应用 Dropout，取需要丢弃的比例为 0.3
     * 最后加上输出层，应用 sigmoid 激活函数，输出二分类结果
+
+<img src="imgs/bert1.png" width="480">
 
 * 训练结果如下。如果应用 Adam 而非 AdamW 优化器，模型表现还会略有上升。
 
@@ -130,11 +130,19 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
 <img src="imgs/gan_disc.png" width="400">
 
 * 问题
-    * dcgan_tutorial.py：目前在colab运行，远程机报错  Could not create cudnn handle: CUDNN_STATUS_INTERNAL_ERROR, Aborted (core dumped)
-    * dlf4_dcgan.py，训练存在问题，不收敛
+    * dcgan_tutorial.py：目前在colab运行正常，远程机报错  Could not create cudnn handle: CUDNN_STATUS_INTERNAL_ERROR, Aborted (core dumped) -> 删除 IPython.display 相关内容
+    * dcgan_keras.py，适于生成某一类图片，使用例子的优化器，但是训练结果依然不理想。可能需要再对超参数做调整，因为书上是针对 cifar 数据集做的训练。
 * 参考
     * 官方教程，[链接](https://www.tensorflow.org/tutorials/generative/dcgan?hl=zh-cn)
     * 《Python 深度学习》第8章
+
+|Generator loss|Discriminator loss|Training time/seconds|
+|--|--|--|
+|0.0168|0.0178|83.55|
+|0.0166|0.0178|102.17|
+|0.0163|0.0180|101.22|
+|-|-|-|
+|0.0166|0.0179|95.65|
 
 20轮训练以后得到的生成图像  
 <img src="imgs/dcgan.png">

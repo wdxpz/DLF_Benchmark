@@ -1,29 +1,26 @@
-'''
-根据TF官方教程实现；
-目前在colab上运行正常，在远程机上报错 
-    Could not create cudnn handle: CUDNN_STATUS_INTERNAL_ERROR
-'''
+# 根据TF官方教程实现
+
 import tensorflow as tf
 from tensorflow.keras import layers
 
 import glob
-import imageio
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import PIL
 import time
-from IPython import display
+# from IPython import display
 
 BATCH_SIZE = 64
 BUFFER_SIZE = 60000
 EPOCHS = 20
 NOISE_DIM = 100
-NUM_EXAMPLES = 16
+NUM_EXAMPLES = 64
 
 # load mnist dataset
 (train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
 
+SAMPLES = train_images.shape[0]
 train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
 train_images = (train_images - 127.5) / 255 # 将图片标准化到 [-0.5, 0.5] 区间内
 
@@ -33,7 +30,7 @@ train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_
 # build models: generator and discriminator
 def make_generator_model():
     model = tf.keras.Sequential()
-    model.add(layers.Dense(7*7*256, use_bias=False, input_shape=(100,)))
+    model.add(layers.Dense(7*7*256, use_bias=False, input_shape=(NOISE_DIM,)))
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU())
 
@@ -59,8 +56,7 @@ generator = make_generator_model()
 
 def make_discriminator_model():
     model = tf.keras.Sequential()
-    model.add(layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same',
-                                     input_shape=[28, 28, 1]))
+    model.add(layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same', input_shape=[28, 28, 1]))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.3))
 
@@ -88,9 +84,10 @@ def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)
 
 # optimizers
-generator_optimizer = tf.keras.optimizers.Adam(lr=2e-4)
-discriminator_optimizer = tf.keras.optimizers.Adam(lr=2e-4)
+generator_optimizer = tf.keras.optimizers.Adam(learning_rate=2e-4, beta_1=0.5)
+discriminator_optimizer = tf.keras.optimizers.Adam(learning_rate=2e-4, beta_1=0.5)
 
+'''
 # add checkpoints
 checkpoint_dir = './training_checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
@@ -99,12 +96,25 @@ checkpoint = tf.train.Checkpoint(
     discriminator_optimizer=discriminator_optimizer,
     generator=generator,
     discriminator=discriminator)
+'''
+
+def generate_and_save_images(model, epoch, test_input):
+  # 注意 training` 设定为 False
+  # 因此，所有层都在推理模式下运行（batchnorm）。
+    predictions = model(test_input, training=False)
+    plt.figure(figsize=(8, 8))
+
+    for i in range(predictions.shape[0]):
+        plt.subplot(8, 8, i+1)
+        plt.imshow(predictions[i, :, :, 0] * 255 + 127.5, cmap='gray')
+        plt.axis('off')
+
+    plt.savefig('pics/image_at_epoch_{:04d}.png'.format(epoch))
 
 # define training
 seed = tf.random.normal([NUM_EXAMPLES, NOISE_DIM])
 
-# 注意 `tf.function` 的使用
-# 该注解使函数被“编译”
+# 注意 `tf.function` 的使用，该注解使函数被“编译”
 @tf.function
 def train_step(images):
     noise = tf.random.normal([BATCH_SIZE, NOISE_DIM])
@@ -124,35 +134,26 @@ def train_step(images):
     generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
     discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
 
+    return gen_loss, disc_loss
+
 def train(dataset, epochs):
-    start = time.time()
     for epoch in range(epochs):
+        total_gen_loss = 0
+        total_disc_loss = 0
         for image_batch in dataset:
-            train_step(image_batch)
-        display.clear_output(wait=True)
-        generate_and_save_images(
-            generator, epoch + 1, seed)
+            gen_loss, disc_loss = train_step(image_batch)
+            total_gen_loss += gen_loss
+            total_disc_loss += disc_loss
+
+        '''
         # 每15个epoch保存一次模型
         if (epoch + 1) % 15 == 0:
             checkpoint.save(file_prefix = checkpoint_prefix)
-    
-    print ('Time for traing is $.3f' % (time.time()-start))
-    display.clear_output(wait=True)
-    generate_and_save_images(generator, epochs, seed)
+        '''
+        print('discrimination loss: %.6f' % (total_disc_loss/SAMPLES))
+        print('generation loss: %.6f' % (total_gen_loss/SAMPLES))
+        generate_and_save_images(generator, epoch+1, seed)
 
-
-def generate_and_save_images(model, epoch, test_input):
-  # 注意 training` 设定为 False
-  # 因此，所有层都在推理模式下运行（batchnorm）。
-    predictions = model(test_input, training=False)
-    fig = plt.figure(figsize=(4,4))
-
-    for i in range(predictions.shape[0]):
-        plt.subplot(4, 4, i+1)
-        plt.imshow(predictions[i, :, :, 0] * 255 + 127.5, cmap='gray')
-        plt.axis('off')
-
-    plt.savefig('pics/image_at_epoch_{:04d}.png'.format(epoch))
-    # plt.show()
-
+start = time.clock()
 train(train_dataset, EPOCHS)
+print('Total training time: %.3f' % (time.clock()-start))

@@ -1,0 +1,21 @@
+
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.43875813484kpis,dcgan_g_train_cost,0.531793117523kpis,dcgan_duration,0.073961019516
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.44617879391kpis,dcgan_g_train_cost,0.51254349947kpis,dcgan_duration,0.0747690200806
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.4272108078kpis,dcgan_g_train_cost,0.554922878742kpis,dcgan_duration,0.0742359161377
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.44776594639kpis,dcgan_g_train_cost,0.50593149662kpis,dcgan_duration,0.0753281116486
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.45956993103kpis,dcgan_g_train_cost,0.490938901901kpis,dcgan_duration,0.0745270252228

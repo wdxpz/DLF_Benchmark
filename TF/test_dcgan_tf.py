@@ -1,6 +1,6 @@
 import os
 os.environ['NVIDIA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['NVIDIA_VISIBLE_DEVICES'] = '0'
+os.environ['NVIDIA_VISIBLE_DEVICES'] = '1'
 
 from DCGAN.dcgan import DCGAN_TF
 

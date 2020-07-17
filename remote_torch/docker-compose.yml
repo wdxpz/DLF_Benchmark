@@ -8,5 +8,5 @@ services:
     shm_size: '8gb'
     runtime: nvidia
     environment:
-      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
     command: /bin/sh -c "while sleep 1000; do :; done"

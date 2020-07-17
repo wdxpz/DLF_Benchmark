@@ -45,22 +45,22 @@ def make_discriminator_model():
     model.add(layers.Conv2D(conf['ndf'], (4, 4), strides=(2, 2), padding='same',
                                      input_shape=[64, 64, 1]))
     model.add(layers.LeakyReLU(0.2))
-    # model.add(layers.Dropout(0.2))
+    model.add(layers.Dropout(0.2))
 
     model.add(layers.Conv2D(conf['ndf']*2, (4, 4), strides=(2, 2), padding='same'))
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU(0.2))
-    # model.add(layers.Dropout(0.2))
+    model.add(layers.Dropout(0.2))
 
     model.add(layers.Conv2D(conf['ndf']*4, (4, 4), strides=(2, 2), padding='same'))
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU(0.2))
-    # model.add(layers.Dropout(0.2))
+    model.add(layers.Dropout(0.2))
 
     model.add(layers.Conv2D(conf['ndf']*8, (4, 4), strides=(2, 2), padding='same'))
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU(0.2))
-    # model.add(layers.Dropout(0.2))
+    model.add(layers.Dropout(0.2))
 
     model.add(layers.Flatten())
     model.add(layers.Dense(1))

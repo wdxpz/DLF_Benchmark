@@ -1,0 +1,20 @@
+
+
+
+training results: 
+
+ total training time: 	 6.99504899979
+
+
+training results: 
+
+ total training time: 	 7.3135330677
+ final average training lostt: 	 21.990
+
+
+training results: 
+
+ total training time: 	 7.38484215736
+ final average training lostt: 	 21.620
+testing results: 
+ accuracy on 1000 test images: 0.100, total time: 6 s

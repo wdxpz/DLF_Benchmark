@@ -9,4 +9,6 @@
 /Notebook/dataset/*
 /Notebook/.idea/*
 /Notebook/.ipynb_checkpoints/*
-
+/Paddle/model/*
+/Paddle/data/*
+/Paddle/*.pyc

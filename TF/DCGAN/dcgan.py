@@ -108,7 +108,8 @@ class DCGAN_TF(object):
 
     @tf.function
     def train_step(self, images):
-        noise = tf.random.normal([self.batch_size, self.nz])
+        noise = tf.random.normal([DCGAN_Config['num_examples_to_generate'], 1, 1, DCGAN_Config['nz']])
+        # noise = tf.random.normal([self.batch_size, self.nz])
 
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.generator(noise, training=True)

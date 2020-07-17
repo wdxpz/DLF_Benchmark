@@ -4,6 +4,7 @@
 /PyTorch/*.pyc
 /TF/.idea/*
 /TF/data/*
+/TF/model/*
 /TF/*.pyc
 /Notebook/checkpoints/*
 /Notebook/dataset/*

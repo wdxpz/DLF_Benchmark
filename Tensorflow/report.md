@@ -81,17 +81,35 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
 * 超参数设置
     * batch-size 32
     * 训练轮数 3
-    * 优化器 AdamW，学习率 1e-5
-    * ε 1e-8
+    * 优化器 AdamW，学习率 1e-5，衰减参数 1e-6
     * MAX_SEQ_LENGTH 128
+
+<img src="imgs/bert1.png" width="480">
+
+* 网络结构：由于 Pytorch 直接使用了 huggingface 的模型，BertForSequenceClassification，此处对于 Tensorflow，采取上面所示的，自己设置的模型
+    * 加载预训练的 bert 分类器
+    * 展开，加上一层全连接层
+    * 应用 Dropout，取需要丢弃的比例为 0.3
+    * 最后加上输出层，应用 sigmoid 激活函数，输出二分类结果
+
+* 训练结果如下。如果应用 Adam 而非 AdamW 优化器，模型表现还会略有上升。
+
+|Training time/minutes|Training acc|Test time/seconds| Test acc|
+|--|--|--|--|
+|37.58|85.30%|57.25|92.74%|
+|34.73|85.74%|58.49|91.82%|
+|33.48|85.71%|58.08|91.53%|
+|-|-|-|-|
+|35.26|85.58%|57.49|92.03%|
+
 * 参考
     * 基于预训练部分做编码 encoding [链接](https://stackabuse.com/text-classification-with-bert-tokenizer-and-tf-2-0-in-python/)
     * 数据[下载](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)
-* 问题：得到的数据为list类型，输入模型需要进一步处理。
+
 
 ## 3. Image Generation
 * 数据集 MNIST 手写数字识别
-    * 图像尺寸：1 x 64 x 64
+    * 图像尺寸：28 x 28 x 1
 * 数据处理
     * 归一化到 [-0.5, 0.5]
 ### 模型 Dc-Gan
@@ -103,8 +121,20 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
     * batch-size 64
     * 训练轮数 20
     * 优化器 Adam，学习率 2e-4，betas (0.5, 0.999)
-* 参考官方教程，[链接](https://www.tensorflow.org/tutorials/generative/dcgan?hl=zh-cn)
-* 问题：目前在colab运行，远程机报错  Could not create cudnn handle: CUDNN_STATUS_INTERNAL_ERROR, Aborted (core dumped)
+* 生成器模型
+
+<img src="imgs/gan_gen.png" width="400">
+
+* 判别器模型
+
+<img src="imgs/gan_disc.png" width="400">
+
+* 问题
+    * dcgan_tutorial.py：目前在colab运行，远程机报错  Could not create cudnn handle: CUDNN_STATUS_INTERNAL_ERROR, Aborted (core dumped)
+    * dlf4_dcgan.py，训练存在问题，不收敛
+* 参考
+    * 官方教程，[链接](https://www.tensorflow.org/tutorials/generative/dcgan?hl=zh-cn)
+    * 《Python 深度学习》第8章
 
 20轮训练以后得到的生成图像  
 <img src="imgs/dcgan.png">

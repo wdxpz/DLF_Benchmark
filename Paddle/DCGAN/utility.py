@@ -11,7 +11,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-img_dim = 28
+img_dim = 64
 
 
 def get_parent_function_name():

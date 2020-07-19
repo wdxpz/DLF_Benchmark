@@ -13,3 +13,4 @@
 /Paddle/model/*
 /Paddle/data/*
 /Paddle/*.pyc
+/Paddle/.ipynb_checkpoints/*

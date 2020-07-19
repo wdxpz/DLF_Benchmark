@@ -50,19 +50,14 @@ def reader_creator(image_filename, label_filename, buffer_size):
 
                     
                     resized_images = numpy.zeros((buffer_size, dst_img_size * dst_img_size)).astype('float32')
-                    print(resized_images.shape)
                     for i in range(buffer_size):
                         img = images[i].reshape((rows, cols))
                         resieze_img = cv2.resize(img, dsize=(dst_img_size, dst_img_size), interpolation=cv2.INTER_LINEAR)
                         resized_images[i] = resieze_img.flatten()
-                        break
 
-                    print(resized_images.shape)
-
-
-                    images = images / 255.0 * 2.0 - 1.0
+                    resized_images = resized_images / 255.0 * 2.0 - 1.0
                     for i in range(buffer_size):
-                        yield images[i, :], int(labels[i])
+                        yield resized_images[i, :], int(labels[i])
 
     return reader
 

@@ -1,0 +1,24 @@
+
+
+training results:
+training time 	1362.51059103
+
+training results:
+training time 	1359.77535987
+	esting results:
+testing time 	261.125882149
+testing accuracy 	0.877
+
+
+training results:
+training time 	1364.46970296
+	esting results:
+testing time 	263.061460972
+testing accuracy 	0.877
+
+
+training results:
+training time 	1362.05601907
+	esting results:
+testing time 	261.614868879
+testing accuracy 	0.876

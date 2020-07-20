@@ -1,16 +1,21 @@
 
 
-
 training results: 
 
- total training time: 	 481.459972858Step 390, Test Loss 0.4, Acc 0.86
-
-
-training results: 
-
- total training time: 	 488.205165148Step 390, Test Loss 0.38, Acc 0.86
+ total training time: 	 486.893052101
+test results: 
+Test Loss 0.35, Acc 0.87, total time: 11.5814900398
 
 
 training results: 
 
- total training time: 	 487.956776857Step 390, Test Loss 0.59, Acc 0.81
+ total training time: 	 489.582047939
+test results: 
+Test Loss 0.35, Acc 0.87, total time: 11.6288919449
+
+
+training results: 
+
+ total training time: 	 489.10058713
+test results: 
+Test Loss 0.33, Acc 0.87, total time: 11.486333847

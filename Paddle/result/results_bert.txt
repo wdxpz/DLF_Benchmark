@@ -1,9 +1,6 @@
 
 
 training results:
-training time 	1362.51059103
-
-training results:
 training time 	1359.77535987
 	esting results:
 testing time 	261.125882149

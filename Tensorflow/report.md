@@ -7,6 +7,7 @@
 * numpy@1.18.1
 * matplotlib@2.2.5
 
+* * *
 ## 1. Image Classification
 * 数据集 CIFAR-10
     * 训练集规模：50000
@@ -35,6 +36,7 @@
  
 <img src="imgs/dlf1.png" width="600">
 
+* * *
 ## 2. Text Sentimnet Analysis
 * 数据集 IMDB
     * 训练集规模：25k
@@ -106,7 +108,7 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
     * 基于预训练部分做编码 encoding [链接](https://stackabuse.com/text-classification-with-bert-tokenizer-and-tf-2-0-in-python/)
     * 数据[下载](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)
 
-
+* * *
 ## 3. Image Generation
 * 数据集 MNIST 手写数字识别
     * 图像尺寸：28 x 28 x 1
@@ -204,17 +206,24 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
 * 问题：
     * 训练效果不好；
     * 将马转换为斑马的生成器 g，明显误差高于另一个生成器 f，目前从训练结果来看，g的训练效果也不是很好。
+
 2. 40轮训练，批量为8，分批时设置 drop_remainder=True
 * 总用时 62.62 分钟，平均每轮 93.9 秒
 * losses: g - 0.271, f - 0.215, dx - 0.0803, dy - 0.0595
 * 问题：
-    * 两个优化器的损失，在刚开始时十分接近，但是随着训练进行，差距越来越大；
+    * 两个生成器的损失，在刚开始时十分接近，但是随着训练进行，差距越来越大；
     * 训练效果相比1有所进步，但还是有些粗糙，马到斑马依然存在重影问题，斑马到马存在着色不全、不均匀的问题；
     * 尝试不同的 batch_size 发现，批量设置不同，累计损失也不同。
 
-<img src="imgs/cg2.1.png">
-<img src="imgs/cg2.2.png">
+<img src="imgs/cg2.1.png" width="480">
+<img src="imgs/cg2.2.png" width="480">
 
 3. 尝试使用教程的参数设置：40轮训练，批量为1，图像归一化为 [-1, 1]
 * 总用时 206.22 分钟，平均每轮 309.33 秒
 * losses: g - 3.405, f - 2.561, dx - 0.601, dy - 0.378
+* 同样出现了生成器相差较大的问题；
+* 在测试集上表现和 2 相近，对于背景和马相差较大的图片，转换效果更好一些；
+* 在训练集上的表现较好，如以下两张图：
+
+<img src="imgs/cg3.1.png" width="480">
+<img src="imgs/cg3.2.png" width="480">

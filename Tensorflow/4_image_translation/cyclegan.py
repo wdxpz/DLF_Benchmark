@@ -1,6 +1,6 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
-
+import numpy as np
 import matplotlib.pyplot as plt
 import time
 
@@ -29,6 +29,7 @@ test_horses, test_zebras = dataset['testA'], dataset['testB']
 # normalize to [-0.5, 0.5]
 def normalize(image):
   image = tf.cast(image, tf.float32)
+  # image = (image/127.5)-1
   image = (image / 255) - 0.5
   return image
 
@@ -115,10 +116,14 @@ def generate_images(model, input, idx, train_or_not):
     for i in range(2):
         plt.subplot(1, 2, i+1)
         plt.title(title[i])
-        plt.imshow(display_list[i] + 0.5)
+        # img = np.clip(display_list[i]*0.5+0.5, 0, 1)
+        img = np.clip(display_list[i]+0.5, 0, 1)
+        plt.imshow(img)
+        # plt.imshow((display_list[i]*0.5) + 0.5)
         plt.axis('off')
     if train_or_not:
-      plt.savefig('pics/cyclegan/train_image_{:02d}.png'.format(idx))
+      if((idx+1)%10==0):
+        plt.savefig('pics/cyclegan/train_image_{:02d}.png'.format(idx))
     else:
       plt.savefig('pics/cyclegan/test_image_{:02d}.png'.format(idx))
 
@@ -185,11 +190,6 @@ for epoch in range(EPOCHS):
     generate_images(gen_g, sample_horse, epoch, True)
     generate_images(gen_f, sample_zebra, epoch+EPOCHS, True)
 print('Toal training time: %.3f' % (time.time()-training_start))
-
-gen_g.save('models/dlf5_gg.h5')
-gen_f.save('models/dlf5_gf.h5')
-disc_x.save('models/dlf5_dx.h5')
-disc_y.save('models/dlf5_dy.h5')
 
 idx = 1
 for inp in test_horses.take(5):

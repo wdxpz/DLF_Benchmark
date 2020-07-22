@@ -9,7 +9,6 @@ import numpy as np
 import os
 import PIL
 import time
-# from IPython import display
 
 BATCH_SIZE = 64
 BUFFER_SIZE = 60000

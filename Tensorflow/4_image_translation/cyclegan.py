@@ -25,11 +25,10 @@ train_horses, train_zebras = dataset['trainA'], dataset['trainB']
 test_horses, test_zebras = dataset['testA'], dataset['testB']
 
 # image transforms
-
 # normalize to [-0.5, 0.5]
 def normalize(image):
   image = tf.cast(image, tf.float32)
-  # image = (image/127.5)-1
+  # image = (image / 127.5) - 1
   image = (image / 255) - 0.5
   return image
 
@@ -64,7 +63,6 @@ test_zebras = test_zebras.map(
 
 sample_horse = next(iter(train_horses))
 sample_zebra = next(iter(train_zebras))
-
 
 # import model from pix2pix
 # generator gen_g: x -> y
@@ -105,6 +103,26 @@ gen_f_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
 disc_x_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
 disc_y_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
 
+# add checkpoints
+checkpoint_path = "checkpoints/cyclegan"
+ckpt = tf.train.Checkpoint(
+  gen_g = gen_g,
+  gen_f = gen_f,
+  disc_x = disc_x,
+  disc_y = disc_y,
+  gen_g_opt = gen_g_opt,
+  gen_f_opt = gen_f_opt,
+  disc_x_opt = disc_x_opt,
+  disc_y_opt = disc_y_opt)
+ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=10)
+
+'''
+# 如果存在检查点，恢复最新版本检查点
+if ckpt_manager.latest_checkpoint:
+  ckpt.restore(ckpt_manager.latest_checkpoint)
+  print ('Latest checkpoint restored')
+'''
+
 # draw pics
 def generate_images(model, input, idx, train_or_not):
     prediction = model(input)
@@ -119,7 +137,6 @@ def generate_images(model, input, idx, train_or_not):
         # img = np.clip(display_list[i]*0.5+0.5, 0, 1)
         img = np.clip(display_list[i]+0.5, 0, 1)
         plt.imshow(img)
-        # plt.imshow((display_list[i]*0.5) + 0.5)
         plt.axis('off')
     if train_or_not:
       if((idx+1)%10==0):
@@ -174,22 +191,32 @@ training_start = time.time()
 
 for epoch in range(EPOCHS):
     start = time.time()
-    gloss = 0
-    floss = 0
-    dxloss = 0
-    dyloss = 0
+    gloss = []
+    floss = []
+    dxloss = []
+    dyloss = []
     for image_x, image_y in tf.data.Dataset.zip((train_horses, train_zebras)):
         total_g_loss, total_f_loss, disc_x_loss, disc_y_loss = train_step(image_x, image_y)
-        gloss += total_g_loss
-        floss += total_f_loss
-        dxloss += disc_x_loss
-        dyloss += disc_y_loss
+        gloss.append(total_g_loss.numpy())
+        floss.append(total_f_loss.numpy())
+        dxloss.append(disc_x_loss.numpy())
+        dyloss.append(disc_y_loss.numpy())
     
-    print('Epoch %d: generator losses: %.3f, %.3f; discriminator losses: %.3f, %.3f' % (epoch+1, gloss, floss, dxloss, dyloss))
-    print ('Time taken for epoch {} is {} sec\n'.format(epoch + 1, time.time()-start))
+    print('Epoch %d: generator losses: %.3f, %.3f; discriminator losses: %.3f, %.3f' % (
+      epoch+1, 
+      sum(gloss)/len(gloss), 
+      sum(floss)/len(floss), 
+      sum(dxloss)/len(dxloss), 
+      sum(dyloss)/len(dyloss)))
+    
+    print ('Time taken for this epoch is %.3f sec\n' % (time.time()-start))
     generate_images(gen_g, sample_horse, epoch, True)
     generate_images(gen_f, sample_zebra, epoch+EPOCHS, True)
-print('Toal training time: %.3f' % (time.time()-training_start))
+    # save checkpoints
+    if (epoch+1)%5==0:
+      ckpt_manager.save()
+
+print('Toal training time: %.3f secs' % (time.time()-training_start))
 
 idx = 1
 for inp in test_horses.take(5):

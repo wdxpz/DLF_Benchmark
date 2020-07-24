@@ -77,16 +77,30 @@
 LSTM适于分析全局的长期性结构，在情感分析问题上表现得差一些。
 
 ### 模型 Bert Large Uncased 768-hidden
-* 用于预训练 NLP，无监督、深度双向模型
-    * per-training，基于大量文本做的无监督学习
-    * fine-tuning，用于具体任务时需要微调
+* Bert 使用了 Transformer 这种 Attention 机制
+    * Trasnformer 原型含有：接受文本输入的编码器 encoder，以及预测输出结果的解码器 decoder；
+    * 与按顺序依次读取文本不同，编码器一次读取整个单词序列，因此被认为是双向的；
+* Bert 的训练方法：
+    * MLM：替换 15% 的单词为 [MASK]，然后将编码器的输出输入分类器，关注每个遮掩掉的单词的预测结果，也就是分类属于各单词的概率；
+    * NSP：接收成对的句子作为输入，预测第二句话是否为第一句话在原文中的后一句。为了区分开两个句子，将在第一句开头插入[CLS]，在每一句结尾插入[SEP]。
+    * Bert 训练时，结合了上面两种方法，以降低两个方法的综合损失为训练目标。
+* 下面将从两个不同的库导入 bert 模型，但是总的流程一致：
+    * 加载数据，此处选择从 github 加载excel数据，[链接](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)，训练集和测试集的形状都是 (25000, 2)，即25k条数据，每条数据都有 Reviews, Sentiment(pos/neg) 两个特征；
+    * 处理数据：
+        * 初步整理数据，比如去掉评论里多余的空格、标点符号等，将感受转换为 1-pos, 0-neg；
+        * 加载预训练的 bert tokenizer，输入文本，得到文本经划分后、转换的数字序列；
+        * 整理序列，限制长度在 MAXLEN 以内，不足的补充，此时训练集和测试集，输入数据为 (25k, MAXLEN)，标签为 (25k, 2)
+    * 加载预训练的 bert 分类器，建立模型，设置优化器和损失函数；
+    * 训练模型，训练结束后在测试集上评估模型表现（此处不划分验证集）。
+
+#### 1. bert-for-tf2
+* pip install bert-for-tf2
 * 超参数设置
     * batch-size 32
     * 训练轮数 3
     * 优化器 AdamW，学习率 1e-5，衰减参数 1e-6
-    * MAX_SEQ_LENGTH 128
-
-* 网络结构：由于 Pytorch 直接使用了 huggingface 的模型，BertForSequenceClassification，此处对于 Tensorflow，采取如下所示的，自己设置的模型
+    * MAXLEN 128
+* 网络结构：采取如下所示的，自己设置的模型
     * 加载预训练的 bert 分类器
     * 展开，加上一层全连接层
     * 应用 Dropout，取需要丢弃的比例为 0.3
@@ -107,6 +121,34 @@ LSTM适于分析全局的长期性结构，在情感分析问题上表现得差�
 * 参考
     * 基于预训练部分做编码 encoding [链接](https://stackabuse.com/text-classification-with-bert-tokenizer-and-tf-2-0-in-python/)
     * 数据[下载](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)
+
+#### 2. huggingface/transformers
+* pip install transformers
+* 超参数设置
+    * batch-size 32
+    * 训练轮数 3
+    * MAXLEN 128
+    * 优化器 Adam，alpha - 1e-5, epsilon - 1e-5, clipnorm - 1.0
+
+* 加载的模型和 Pytorch 中的一样，为 huggingface/transformers/TFBertForSequenceClassification
+
+<img src="imgs/hf_bert.png" width="480">
+
+* 训练结果如下
+
+|Training time/minutes|Training acc|Test time/seconds| Test acc|
+|--|--|--|--|
+|16.28|93.23%|116.18|97.49%|
+|16.32|93.20%|115.04|97.53%|
+|16.33|93.36%|115.80|97.86%|
+|-|-|-|-|
+|16.31|93.26%|115.67|97.63%|
+
+#### 总结
+* 调用 huggingface/transformers 的效果更好一些；
+* 不论使用哪个预训练的模型，都观察到，测试集的准确率明显高于训练集
+    * 尝试交换训练集和测试集的数据，发现结果不变，依然是在作为测试集的数据集上准确率更高一些，所以和数据质量大概率无关；
+    * 尝试用训练完的模型，再次评估训练集，发现结果和测试集差不多，推测是模型训练的问题。
 
 * * *
 ## 3. Image Generation

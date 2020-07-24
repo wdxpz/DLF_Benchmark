@@ -80,6 +80,8 @@
 * 修正：
     * 不限制输入字符串的长度 -> 准确率有所上升
     * 修正运行时间为 time.time() -> 计算出的训练时间下降
+    * 取消验证集
+<br>
 
 |Training time/minutes|Training acc|Test time/seconds| Test acc|
 |--|--|--|--|--|

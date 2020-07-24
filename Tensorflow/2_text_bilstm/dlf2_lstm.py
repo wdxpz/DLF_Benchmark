@@ -1,69 +1,63 @@
 import tensorflow as tf
+import tensorflow_datasets as tfds
+'''
 import keras
 from keras import datasets
 from keras import layers
 from keras import models
 from keras import preprocessing
+'''
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 
 # hyper-params
+BUFFER_SIZE = 10000
 BATCH_SIZE = 64
 EPOCHS = 20
-VOCAB_SIZE = 32650  # 单词表长度
-MAXLEN = 128       # 评论的长度，超过截断
 EMBED_DIM = 64
 
 # load dataset
-print('Loading data...')
-(train_data, train_label),(test_data, test_label) = datasets.imdb.load_data(num_words=VOCAB_SIZE)
-print(len(train_data), 'train sequences')
-print(len(test_data), 'test sequences')
+dataset, info = tfds.load('imdb_reviews/subwords32k', with_info=True, as_supervised=True)
 
-# pad input tuples
-train_x = preprocessing.sequence.pad_sequences(train_data, maxlen=MAXLEN)
-test_x = preprocessing.sequence.pad_sequences(test_data, maxlen=MAXLEN)
-print('Training set input shape: ', train_x.shape)
-print('Test set input shape: ', test_x.shape)
+train_dataset = dataset['train']
+test_dataset = dataset['test']
+
+train_dataset = train_dataset.shuffle(BUFFER_SIZE).padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(train_dataset))
+test_dataset = test_dataset.padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(test_dataset))
+
+tokenizer = info.features['text'].encoder
+VOCAB_SIZE = tokenizer.vocab_size
 
 # build model
-model = models.Sequential()
-# Embedding layer
-model.add(layers.Embedding(VOCAB_SIZE, EMBED_DIM, input_length=MAXLEN))
-# LSTM layer x 2
-model.add(layers.Bidirectional(layers.LSTM(EMBED_DIM, return_sequences=True)))
-# model.add(layers.Dropout(dropout_rate)) 不引入随机失活
-model.add(layers.Bidirectional(layers.LSTM(EMBED_DIM, return_sequences=False)))
-# FC layer  
-model.add(layers.Dense(EMBED_DIM, activation='relu'))
-model.add(layers.Dense(1, activation='sigmoid'))
+model = tf.keras.Sequential([
+    tf.keras.layers.Embedding(VOCAB_SIZE, EMBED_DIM),
+    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(EMBED_DIM, return_sequences=True)),
+    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(EMBED_DIM, return_sequences=False)),
+    tf.keras.layers.Dense(EMBED_DIM, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
 
 model.compile(
-    loss='binary_crossentropy',
-    optimizer=keras.optimizers.Adam(learning_rate=1e-4),
-    metrics=['acc']
+    loss = 'binary_crossentropy',
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4),
+    metrics = ['acc']
 )
 
 model.summary()
 
-start_train = time.clock()
+start_train = time.time()
 history = model.fit(
-    train_x, train_label,
+    train_dataset,
     epochs=EPOCHS,
-    batch_size=BATCH_SIZE,
-    validation_split=0.2
+    validation_data = test_dataset
 )
-print('Total training time: %.3f' % (time.clock() - start_train))
+print('Total training time: %.3f' % (time.time() - start_train))
 
-start_test = time.clock()
-test_loss, test_acc = model.evaluate(
-    test_x, test_label,
-    batch_size=BATCH_SIZE
-)
+start_test = time.time()
+test_loss, test_acc = model.evaluate(test_dataset)
 print('On test set: loss - %.5f, acc - %.5f' % (test_loss, test_acc))
-print('Total test time: %.3f' % (time.clock() - start_test))
-
+print('Total test time: %.3f' % (time.time() - start_test))
 
 model.save('models/dlf2.h5')
 

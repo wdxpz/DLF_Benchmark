@@ -45,32 +45,38 @@ for sen in test_sens:
 # load labels and convert text to number 0/1
 train_labels = train_data['Sentiment']
 train_labels = np.array(list(map(lambda x: 1 if x=="pos" else 0, train_labels)))
+train_y = np.expand_dims(train_labels, axis=1)
+
 test_labels = test_data['Sentiment']
 test_labels = np.array(list(map(lambda x: 1 if x=="pos" else 0, test_labels)))
+test_y = np.expand_dims(test_labels, axis=1)
 
 # encode text
 # get tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 def tokenize_text(text):
-  return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
+  return tokenizer.encode(
+    text, add_special_tokens=True, 
+    max_length=MAXLEN, pad_to_max_length=True, truncation=True)
 
 train_revs_encode = [tokenize_text(rev) for rev in train_reviews]
 test_revs_encode = [tokenize_text(rev) for rev in test_reviews]
+
+train_x = np.asarray(train_revs_encode, dtype=np.int32)
+test_x = np.asarray(test_revs_encode, dtype=np.int32)
+
 print('ENCODE SUCCESSFULLY')
 
-# pad sequences for input
+'''
 train_x = tf.keras.preprocessing.sequence.pad_sequences(
   train_revs_encode, maxlen=MAXLEN, dtype='int32',
   padding='post', truncating = 'post', value=0
 )
-train_y = np.expand_dims(train_labels, axis=1)
-
 test_x = tf.keras.preprocessing.sequence.pad_sequences(
   test_revs_encode, maxlen=MAXLEN, dtype='int32',
   padding='post', truncating = 'post', value=0
 )
-test_y = np.expand_dims(test_labels, axis=1)
-
+'''
 
 # build model -> load directly
 model = TFBertForSequenceClassification.from_pretrained('bert-base-cased')

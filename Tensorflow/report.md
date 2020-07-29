@@ -79,10 +79,9 @@
 <img src="imgs/lstm.png" width=480>
 
 ### 实验结果
-<!-- * 进行的一些修正：不限制输入字符串的长度，修正运行时间为 time.time()，取消验证集 -->
 
-|Training time/minutes|Training acc|Test time/seconds| Test acc|
-|--|--|--|--|--|
+|Training time/minutes|Training acc|Test time/seconds|Test acc|
+|---|---|---|---|
 |21.53|99.83%|18.103|82.47%|
 |21.72|99.31%|18.265|82.20%|
 |22.77|99.97%|19.976|84.11%|
@@ -292,9 +291,9 @@
 ||Tensorflow|82.93%|22.01 min|18.78 s|
 |Bert|Pytorch|98.2%|16.24 min|196.96 s|
 ||Tensorflow|88.69%|16.03 min|111.13 s|
-
+  
 |Model|Framework|Disc loss|Gen loss|Time|备注|
-|--|--|--|--|--|
+| --- | --- | --- | --- | --- | --- |
 |DCGAN|Pytorch|0.4969|3.1592|20.45 min||
 ||Tensorflow|1.627|0.313|9.51 min||
 ||Tensorflow|1.133|1.069|2.88 min|采取tf_tutorial模型|

@@ -16,28 +16,43 @@
     * 输出标签共 10 类
 * 数据处理
     * 输入图像只做缩放处理，除以255，取值范围控制在 [0, 1]
-    * 输出的预测标签进行 one-hot 编码处理，扩展维度
+    * 输出的预测标签进行 one-hot 编码处理
+
 ### 模型 VGG16
 * 超参数设置
     * batch_size，训练时 64， 测试时 128
     * 训练轮数 30
-    * 优化器 Adam，学习率 1e-4
-    * 损失函数 categorical crossentropy
+    * 优化器 Adam，lr=1e-4
+    * 损失函数 categorical_crossentropy
+* 模型输入形状设计为 (None, 32, 32, 3)，卷积基部分不变，重写分类器
+    * 展开得到 512
+    * FC层 -> 4096，应用激活函数 relu
+    * Dropout(0.5)
+    * FC层 -> 4096，应用激活函数 relu
+    * Dropout(0.5)
+    * 输出层 -> 10，应用分类函数 softmax
+* 模型结构为：
 
-|Training time/minutes|Training acc|Test time/seconds| Test acc|
-|--|--|--|--|
-|12.95|98.31%|0.714|78.82%|
-|12.89|98.72%|0.679|76.65%|
-|12.77|98.60%|0.706|77.92%|
-|-|-|-|-|
-|12.87|98.54%|0.700|77.80%|
+<img src="imgs/vgg1.png" width=480>
+<img src="imgs/vgg2.png" width=480>
 
-(注：最后一行为平均值) 
+### 实验结果
+
+|Training time/minutes|Training acc|Test time/seconds|Test acc|备注|
+|--|--|--|--|--|
+|20.55|98.57%|1.185|78.55%|分类器无Dropout层|
+|13.22|98.67%|1.192|78.54%|添加Dropout层|
+|13.28|98.82%|1.180|78.28%||
+|13.37|98.44%|1.182|78.47%||
+|-|-|-|-|-|
+|13.29|98.64%|1.185|78.43%|均值|
  
+* loss-epochs, acc-epochs 图如下
+
 <img src="imgs/dlf1.png" width="600">
 
 * * *
-## 2. Text Sentimnet Analysis
+## 2. Text Sentiment Analysis - BiLSTM
 * 数据集 IMDB
     * 训练集规模：25k
     * 测试集规模：25k
@@ -49,43 +64,44 @@
 * 超参数设置
     * batch_size 64
     * 训练轮数 20
-    * 优化器 Adam，学习率 1e-4
-    * 单词总数 32k
+    * 优化器 Adam，lr=1e-4
+    * 单词总数 32650
     * 词嵌入维度 64
-    * 验证集占训练集比例 0.2
-    * dropout=0，即不采取随机失活
-    * 评论长度 MAXLEN，超出此长度的被截断，这里并未给出，采取和下个模型相同的参数 128
+    * dropout = 0
+    * 评论的长度不进行截断
+    * （Pytorch 一开始设置了验证集占训练集比例 0.2，但是后来通过注释取消了验证集）
+
 * 模型结构
     * Embedding
-    * Bi-LSTM
-    * Bi-LSTM
-    * FC
-    * FC
+    * 两层 Bi-LSTM
+    * 两层 FC
 
-|Training time/minutes|Training acc|Validation acc|Test time/seconds| Test acc|
-|--|--|--|--|--|
-|34.19|99.78%|84.46%|19.787|82.06%|
-|32.62|99.85%|83.50%|19.060|82.99%|
-|32.84|99.92%|84.30%|18.703|82.93%|
-|-|-|-|-|
-|33.21|99.85%|84.08%|19.183|82.66%|
+<img src="imgs/lstm.png" width=480>
 
-<img src="imgs/dlf2.png" width="600"><br>
-
-注：虚线为训练集，实线为验证集。  
-* 问题
-    * 从图像来看，存在过拟合问题，可能因为没有采取正则化；  
-    * 在测试集上的表现较差，可能因为 LSTM 适于分析全局的长期性结构，在情感分析问题上表现得差一些。
-
-* 修正：
-    * 不限制输入字符串的长度 -> 准确率有所上升
-    * 修正运行时间为 time.time() -> 计算出的训练时间下降
-    * 取消验证集
-<br>
+### 实验结果
+<!-- * 进行的一些修正：不限制输入字符串的长度，修正运行时间为 time.time()，取消验证集 -->
 
 |Training time/minutes|Training acc|Test time/seconds| Test acc|
 |--|--|--|--|--|
-|26.48|99.90%|18.06|84.52%|
+|21.53|99.83%|18.103|82.47%|
+|21.72|99.31%|18.265|82.20%|
+|22.77|99.97%|19.976|84.11%|
+|-|-|-|-|
+|22.01|99.70%|18.781|82.93%|
+
+* loss-epochs, acc-epochs 图像如下，虚线为训练集，实线为测试集（这里将测试集作为验证集使用）
+* 存在问题
+    * 从图像来看，存在过拟合问题，可能因为没有采取正则化；  
+    * 在测试集上的表现较差，可能因为 LSTM 适于分析全局的长期性结构，在情感分析问题上表现得差一些。
+
+<img src="imgs/dlf2.png" width="600"><br>
+
+* * * 
+## 3. Text Sentiment Analysis - Bert
+* 数据集 IMDB
+    * 训练集规模：25k
+    * 测试集规模：25k
+    * 二分类，输出结果是影评的情感为正面/负面
 
 ### 模型 Bert Large Uncased 768-hidden
 * Bert 使用了 Transformer 这种 Attention 机制
@@ -94,92 +110,76 @@
 * Bert 的训练方法：
     * MLM：替换 15% 的单词为 [MASK]，然后将编码器的输出输入分类器，关注每个遮掩掉的单词的预测结果，也就是分类属于各单词的概率；
     * NSP：接收成对的句子作为输入，预测第二句话是否为第一句话在原文中的后一句。为了区分开两个句子，将在第一句开头插入[CLS]，在每一句结尾插入[SEP]。
-    * Bert 训练时，结合了上面两种方法，以降低两个方法的综合损失为训练目标。
-* 下面将从两个不同的库导入 bert 模型，但是总的流程一致：
-    * 加载数据，此处选择从 github 加载excel数据，[链接](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)，训练集和测试集的形状都是 (25000, 2)，即25k条数据，每条数据都有 Reviews, Sentiment(pos/neg) 两个特征；
-    * 处理数据：
-        * 初步整理数据，比如去掉评论里多余的空格、标点符号等，将感受转换为 1-pos, 0-neg；
-        * 加载预训练的 bert tokenizer，输入文本，得到文本经划分后、转换的数字序列；
-        * 整理序列，限制长度在 MAXLEN 以内，不足的补充，此时训练集和测试集，输入数据为 (25k, MAXLEN)，标签为 (25k, 2)
-    * 加载预训练的 bert 分类器，建立模型，设置优化器和损失函数；
-    * 训练模型，训练结束后在测试集上评估模型表现（此处不划分验证集）。
 
-#### 1. bert-for-tf2
-* pip install bert-for-tf2
-* 超参数设置
-    * batch-size 32
-    * 训练轮数 3
-    * 优化器 AdamW，学习率 1e-5，衰减参数 1e-6
-    * MAXLEN 128
-* 网络结构：采取如下所示的，自己设置的模型
-    * 加载预训练的 bert 分类器
-    * 展开，加上一层全连接层
-    * 应用 Dropout，取需要丢弃的比例为 0.3
-    * 最后加上输出层，应用 sigmoid 激活函数，输出二分类结果
-
-<img src="imgs/bert1.png" width="480">
-
-* 训练结果如下。如果应用 Adam 而非 AdamW 优化器，模型表现还会略有上升。
-
-|Training time/minutes|Training acc|Test time/seconds| Test acc|
-|--|--|--|--|
-|37.58|85.30%|57.25|92.74%|
-|34.73|85.74%|58.49|91.82%|
-|33.48|85.71%|58.08|91.53%|
-|-|-|-|-|
-|35.26|85.58%|57.49|92.03%|
-
-* 参考
-    * 基于预训练部分做编码 encoding [链接](https://stackabuse.com/text-classification-with-bert-tokenizer-and-tf-2-0-in-python/)
-    * 数据[下载](https://github.com/laxmimerit/IMDB-Movie-Reviews-Large-Dataset-50k.git)
-
-#### 2. huggingface/transformers
-* pip install transformers
+#### 实验设计
 * 超参数设置
     * batch-size 32
     * 训练轮数 3
     * MAXLEN 128
-    * 优化器 Adam，alpha - 1e-5, epsilon - 1e-5, clipnorm - 1.0
+    * 优化器
+        * 在Pytorch中，调用 transformers.AdamW() 设置优化器的 lr, epsilon，注意到参数 weight_decay 使用默认值0；
+        * 然后调用 transformers 中的方法，get_linear_schedule_with_warmup() 设置学习率；
+        * 但是对于 tf2，transformers 中创建对应优化器的方法不同：
+        * transformers.create_optimizer() -> [link](https://huggingface.co/transformers/_modules/transformers/optimization_tf.html#WarmUp)
+            * init_lr = 1e-5
+            * num_train_steps，计算训练总步数
+            * num_warmup_steps = 0
+            * adam_epsilon = 1e-5
+            * weight_decay_rate，默认为0，返回 Adam 优化器，只有设置大于0时，才返回 AdamWeightDecay 优化器。所以此处使用默认参数，Adam 优化器。
+    <!-- * 优化器 AdamWeightDecay (import from transformers)
+        * lr = 1e-5 (default 1e-3)
+        * epsilon = 1e-5 (default 1e-6)
+        * clipnorm = 1.0
+        * 其余默认值：beta_1 = 0.9, beta_2 = 0.999, weight_decay_rate = 0 -->
+    * dropout = 0, embeded_size = 16，未使用这两个参数
+    * config 不进行调整，transformers.BertConfig 中，并无 Pytorch 调整的内容
 
-* 加载的模型和 Pytorch 中的一样，为 huggingface/transformers/TFBertForSequenceClassification
+* 实验流程
+    * 安装模型库 huggingface/transformers -> pip install transformers
+    * 加载数据，从tfds中，直接加载'imdb_reviews/plain_text'，训练集和测试集的样本数都是 25k
+    * 加载预训练的 BertTokenizer，调用 encode_plus() 对读取的评论进行处理
+        * add_special_tokens=True // 添加特殊字符
+        * max_length=MAXLEN // 截取评论长度
+        * pad_to_max_length=True // 长度不足的进行补充
+    * 数据经编码处理后，进行字典映射，才能作为输入数据
+        * input_ids, 分词对应的数字
+        * attention_mask, 有分词处为1，其余填充的部分为0
+        * token_type_ids, 进行上下文预测时，第一句为0，第二句为1，此处均为0
+    * 加载预训练的分类器 TFBertForSequenceClassification，建立模型，设置优化器和损失函数；
+    * 训练模型，训练结束后在测试集上评估模型表现。
+* 模型结构
+    <br><img src="imgs/bert.png" width="480">
 
-<img src="imgs/hf_bert.png" width="480">
+### 实验结果
 
-* 训练结果如下
+|Training time/minutes|Training acc|Test time/seconds|Test acc|备注|
+|--|--|--|--|--|
+|16.00|92.91%|110.62|88.79%||
+|16.01|92.96%|111.13|88.66%||
+|16.08|92.64%|111.63|88.63%||
+|-|-|-|-|-|
+|16.03|92.84%|111.13|88.69%||
+|-|-|-|-|-|
+|107.61|97.66%|555.37|93.17%|hyper_params: <br>batch_size=6, maxlen=512, <br>lr=2e-5, epsilon=1e-8|
 
-|Training time/minutes|Training acc|Test time/seconds| Test acc|
-|--|--|--|--|
-|16.28|93.23%|116.18|97.49%|
-|16.32|93.20%|115.04|97.53%|
-|16.33|93.36%|115.80|97.86%|
-|-|-|-|-|
-|16.31|93.26%|115.67|97.63%|
-
-* 修正：编码时添加 add_special_tokens=True，在加载的预训练模型 bert-base-uncased 中，添加的特殊字符默认为 [MASK]，采取 MLM 训练 -> 编码时间变长，训练和测试时间基本不变，准确率提高。
-
-|Training time/minutes|Training acc|Test time/seconds| Test acc|
-|--|--|--|--|
-|16.39|94.35%|116.26|98.06%|
-
-#### 总结
-* 调用 huggingface/transformers 的效果更好一些；
-* 不论使用哪个预训练的模型，都观察到，测试集的准确率明显高于训练集
-    * 尝试交换训练集和测试集的数据，发现结果不变，依然是在作为测试集的数据集上准确率更高一些，所以和数据质量大概率无关；
-    * 尝试用训练完的模型，再次评估训练集，发现结果和测试集差不多，推测是模型训练的问题。
+* 经过输入数据的修正，训练前期，测试集的准确率高于训练集，后期低于训练集；
+* 修正后，bert 在测试集上的表现大大下降，可能和采取的数据处理也有关系。
 
 * * *
-## 3. Image Generation
+## 4. Image Generation
 * 数据集 MNIST 手写数字识别
     * 图像尺寸：28 x 28 x 1
 * 数据处理
     * 归一化到 [-0.5, 0.5]
+    * 缩放图像到 64 x 64 x 1
+
 ### GAN
 * GANs，生成对抗网络，两个模型通过对抗过程同时训练
     * 生成器，输入随机向量，根据向量输出合成图像；
     * 判别器，输入一张图像，判断该图像是来自训练集的真实图像，还是来自生成器的合成图像；
     * 训练过程中，二者的能力都逐渐增强，生成器逐渐生成越来越真实的图像，而判别器也不断提高自己的判断标准；
     * GAN 优化的最小值是不固定的，因为系统在动态改变，训练最终达到生成器和判别器之间的平衡。
-* GAN 的一些常用技巧：
+<!-- * GAN 的一些常用技巧：
     * 最后一层的激活函数常用 tanh
     * 用正态分布在空间中随机采点
     * 随机性可以提高稳健性：dropout & 随机噪声
@@ -187,20 +187,19 @@
         * 卷积操作的本质是，在输入矩阵和 kernel 之间逐元素相乘然后求和，建立输入和输出之间，多对一的位置性关系；
         * 卷积矩阵，是重排了 kernel，每一行都是 kernel 展开，填充0得到。例如输入矩阵为4x4，核为3x3，那么将核转换为卷积矩阵 4x16，乘上输入矩阵的展开列向量 16x1，最终结果 4x1 就是原来的输出矩阵 2x2 展开。
         * 转置卷积，就是使用卷积矩阵的转置，比如上例中，16x4 的转置矩阵，可以将 1x4 的矩阵映射为 1x9，建立一对多的关系，是一种可学习的上采样方法。
-    * 生成图像的棋盘伪影，是像素空间覆盖不均匀导致的，注意卷积层内核大小和步幅大小
+    * 生成图像的棋盘伪影，是像素空间覆盖不均匀导致的，注意卷积层内核大小和步幅大小 -->
+
 ### 模型 DcGAN
 * 超参数设置
     * batch-size 64
     * 训练轮数 20
     * 优化器 Adam，学习率 2e-4，betas (0.5, 0.999)
+    * 生成器和判别器的特征图均为 64 x 64
+    * 生成器输入随机向量的维度是 100
 * 生成器模型
-
-<img src="imgs/gan_gen.png" width="400">
-
+    <br><img src="imgs/gen.png" width="400">
 * 判别器模型
-
-<img src="imgs/gan_disc.png" width="400">
-
+    <br><img src="imgs/disc.png" width="400">
 * 损失函数取二元交叉熵。生成器考虑生成图片是否被判定为真，判别器考虑是否判定生成图片为假，以及是否判定原图片为真；
 * 优化器都采取 Adam，参数设置相同；
 * 每轮训练分批进行，对于每个训练步骤（一个batch）：
@@ -210,28 +209,30 @@
     * 计算生成器和判别器的梯度；
     * 应用优化器，更新模型参数。
 
-#### 模型实现
-1. dcgan_tutorial.py，根据tf官方教程，修改了部分超参数，参考[链接](https://www.tensorflow.org/tutorials/generative/dcgan?hl=zh-cn)
-2. dcgan_keras.py，参考《Python 深度学习》，基于 Keras 实现，训练结果不理想。可能需要再对超参数做调整，因为书上是针对 cifar 数据集、生成某一类图片，做的训练。
-
 #### 实验结果
-|Generator loss|Discriminator loss|Training time/seconds|
-|--|--|--|
-|1.047|1.146|173.62|
-|1.091|1.122|173.10|
-|1.069|1.132|172.21|
-|-|-|-|
-|1.069|1.133|172.98|
+1. 采取官方教程的模型 dcgan_tutorial.py
 
-(注：损失函数计算错误，已修正)  
-20轮训练以后得到的生成图像  
+|Generator loss|Discriminator loss|Training time/minutes|
+|--|--|--|
+|1.047|1.146|2.89|
+|1.091|1.122|2.89|
+|1.069|1.132|2.87|
+|-|-|-|
+|1.069|1.133|2.88|
+
 <img src="imgs/dcgan.png" width="480">
 
-* 存在问题：
-    * 损失的计算，是累计了各个批次的损失，除以总样本数得到，但是和 Pytorch 结果相差较远。
+2. 采取如上所示的，和 pytorch 相同的模型
+
+|Generator loss|Discriminator loss|Training time/minutes|
+|--|--|--|
+|0.313|1.627|9.51|
+
+<img src="imgs/gan_img.png" width="480">
+
 
 * * *
-## 4. Image Translation
+## 5. Image Translation
 * 数据集 horse and zebra from ImageNet
     * 加载自 cycle_gan/horse2zebra
     * 训练集，马的图片 1067， 斑马的图片 1334
@@ -260,34 +261,6 @@
 * 优化器：生成器和判别器都采取 Adam 优化器，参数一致
 * 训练：对于每一轮迭代，枚举训练集的批，计算四个模型的损失函数和梯度，使用优化器更新参数。
 #### 实验结果
-<!-- 1. 100轮训练，批量为8
-* 总用时 156.12 分钟，平均每轮 93.7 秒
-* losses: g - 0.326, f - 0.209, dx - 0.0778, dy - 0.0384
-* 问题：
-    * 训练效果不好；
-    * 将马转换为斑马的生成器 g，明显误差高于另一个生成器 f，目前从训练结果来看，g的训练效果也不是很好。
-
-2. 40轮训练，批量为8，分批时设置 drop_remainder=True
-* 总用时 62.62 分钟，平均每轮 93.9 秒
-* losses: g - 0.271, f - 0.215, dx - 0.0803, dy - 0.0595
-* 问题：
-    * 两个生成器的损失，在刚开始时十分接近，但是随着训练进行，差距越来越大；
-    * 训练效果相比1有所进步，但还是有些粗糙，马到斑马依然存在重影问题，斑马到马存在着色不全、不均匀的问题；
-    * 尝试不同的 batch_size 发现，批量设置不同，累计损失也不同。
-
-<img src="imgs/cg2.1.png" width="480">
-<img src="imgs/cg2.2.png" width="480">
-
-3. 尝试使用教程的参数设置：40轮训练，批量为1，图像归一化为 [-1, 1]
-* 总用时 206.22 分钟，平均每轮 309.33 秒
-* losses: g - 3.405, f - 2.561, dx - 0.601, dy - 0.378
-* 同样出现了生成器相差较大的问题；
-* 在测试集上表现和 2 相近，对于背景和马相差较大的图片，转换效果更好一些；
-* 在训练集上的表现较好，如以下两张图：
-
-<img src="imgs/cg3.1.png" width="480">
-<img src="imgs/cg3.2.png" width="480"> -->
-
 * 训练轮数 100
 * 总用时 9417.55 secs / 156.96 mins，平局每轮用时 94.18 secs
 * 训练开始和结束时的 losses
@@ -307,3 +280,21 @@
     * 两个生成器的表现差距较大，可能因为进行的工作不同，从结果来看，生成器g将马转换为斑马，表现更差一些；
     * 注意到最终转换效果，其实和目标物体在图片上是否容易识别也有一定的关系，比如马/斑马的大小、颜色和背景的接近程度等。推测，正是由于斑马颜色和背景差距较大，所以生成器f的表现更好；
     * 从测试集来看，依然存在一些问题，比如g转换出的斑马容易有重影、误改变了背景颜色，f转换马时，容易有上色不均匀、不明显等问题。
+
+* * *
+## 对比
+
+|Model|Framework|Test acc|Training time|Test time|
+|--|--|--|--|--|
+|VGG16|Pytorch|76.57%|26.93 min|4.235 s|
+||Tensorflow|78.43%|13.29 min|1.185 s|
+|BiLSTM|Pytorch|98.6%|5.05 min|5.74 s|
+||Tensorflow|82.93%|22.01 min|18.78 s|
+|Bert|Pytorch|98.2%|16.24 min|196.96 s|
+||Tensorflow|88.69%|16.03 min|111.13 s|
+
+|Model|Framework|Disc loss|Gen loss|Time|备注|
+|--|--|--|--|--|
+|DCGAN|Pytorch|0.4969|3.1592|20.45 min||
+||Tensorflow|1.627|0.313|9.51 min||
+||Tensorflow|1.133|1.069|2.88 min|采取tf_tutorial模型|

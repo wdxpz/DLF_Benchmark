@@ -1,21 +1,18 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
-'''
-import keras
-from keras import datasets
-from keras import layers
-from keras import models
-from keras import preprocessing
-'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 
 # hyper-params
 BUFFER_SIZE = 10000
-BATCH_SIZE = 64
 EPOCHS = 20
+BATCH_SIZE = 64
 EMBED_DIM = 64
+DROPOUT = 0
+ALPHA = 1e-4
+VOCAB_SIZE = 32650
 
 # load dataset
 dataset, info = tfds.load('imdb_reviews/subwords32k', with_info=True, as_supervised=True)
@@ -26,21 +23,27 @@ test_dataset = dataset['test']
 train_dataset = train_dataset.shuffle(BUFFER_SIZE).padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(train_dataset))
 test_dataset = test_dataset.padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(test_dataset))
 
-tokenizer = info.features['text'].encoder
-VOCAB_SIZE = tokenizer.vocab_size
+# tokenizer = info.features['text'].encoder
+# VOCAB_SIZE = tokenizer.vocab_size -> 32650
 
 # build model
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(VOCAB_SIZE, EMBED_DIM),
-    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(EMBED_DIM, return_sequences=True)),
-    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(EMBED_DIM, return_sequences=False)),
+    tf.keras.layers.Bidirectional(
+        tf.keras.layers.LSTM(
+            EMBED_DIM, dropout=DROPOUT, return_sequences=True
+            )),
+    tf.keras.layers.Bidirectional(
+        tf.keras.layers.LSTM(
+            EMBED_DIM, dropout=DROPOUT, return_sequences=False
+            )),
     tf.keras.layers.Dense(EMBED_DIM, activation='relu'),
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
 model.compile(
     loss = 'binary_crossentropy',
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4),
+    optimizer = tf.keras.optimizers.Adam(learning_rate=ALPHA),
     metrics = ['acc']
 )
 
@@ -52,12 +55,12 @@ history = model.fit(
     epochs=EPOCHS,
     validation_data = test_dataset
 )
-print('Total training time: %.3f' % (time.time() - start_train))
+print('Total training time: %.3f mins' % ((time.time() - start_train)/60))
 
 start_test = time.time()
 test_loss, test_acc = model.evaluate(test_dataset)
 print('On test set: loss - %.5f, acc - %.5f' % (test_loss, test_acc))
-print('Total test time: %.3f' % (time.time() - start_test))
+print('Total test time: %.3f secs' % (time.time() - start_test))
 
 model.save('models/dlf2.h5')
 

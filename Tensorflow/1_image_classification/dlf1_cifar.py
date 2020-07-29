@@ -8,6 +8,7 @@ import time
 TRAIN_BATCH_SIZE = 64
 TEST_BATCH_SIZE = 128
 EPOCHS = 30
+ALPHA = 1e-4
 
 # load dataset
 (train_images, train_labels), (test_images, test_labels) = keras.datasets.cifar10.load_data()
@@ -22,35 +23,48 @@ test_images = test_images/255.
 train_labels = keras.utils.to_categorical(train_labels)
 test_labels = keras.utils.to_categorical(test_labels)
 
+# print(train_images.shape) -> (50000, 32, 32, 3)
+# print(train_labels.shape) -> (50000, 10)
+
 # load model VGG16
-model = keras.applications.VGG16(
-    include_top=True, 
+vgg16 = keras.applications.VGG16(
+    include_top=False, 
     weights=None,
     input_shape=(32, 32, 3),
-    classes=10)
+)
+vgg16.summary()
+
+model = keras.models.Sequential()
+model.add(vgg16)
+model.add(keras.layers.Flatten())
+model.add(keras.layers.Dense(4096, activation='relu'))
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Dense(4096, activation='relu'))
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Dense(10, activation='softmax'))
 
 model.summary()
 
 model.compile(
     loss='categorical_crossentropy',
-    optimizer=keras.optimizers.Adam(lr=1e-4),
+    optimizer=keras.optimizers.Adam(lr=ALPHA),
     metrics=['acc'])
 
-start_train = time.clock()
+start_train = time.time()
 history = model.fit(
     train_images, train_labels,
     batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS,
     shuffle=True
 )
-print('Training accomplished. Total time: %.3f' % (time.clock()-start_train))
+print('Training accomplished. Total time: %.3f' % (time.time()-start_train))
 
-start_eval = time.clock()
+start_eval = time.time()
 test_loss, test_acc = model.evaluate(
     test_images, test_labels,
     batch_size=TEST_BATCH_SIZE
 )
 print('On test set: loss: %.5f, acc: %.5f' % (test_loss, test_acc))
-print('Test accomplished. Total time: %.3f' % (time.clock()-start_eval))
+print('Test accomplished. Total time: %.3f' % (time.time()-start_eval))
 
 model.save('models/dlf1.h5')
 

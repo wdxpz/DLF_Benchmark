@@ -79,10 +79,9 @@
 <img src="imgs/lstm.png" width=480>
 
 ### 实验结果
-<!-- * 进行的一些修正：不限制输入字符串的长度，修正运行时间为 time.time()，取消验证集 -->
 
-|Training time/minutes|Training acc|Test time/seconds| Test acc|
-|--|--|--|--|--|
+|Training time/minutes|Training acc|Test time/seconds|Test acc|
+|---|---|---|---|
 |21.53|99.83%|18.103|82.47%|
 |21.72|99.31%|18.265|82.20%|
 |22.77|99.97%|19.976|84.11%|

@@ -20,15 +20,26 @@ dataset, info = tfds.load('imdb_reviews/subwords32k', with_info=True, as_supervi
 train_dataset = dataset['train']
 test_dataset = dataset['test']
 
-train_dataset = train_dataset.shuffle(BUFFER_SIZE).padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(train_dataset))
-test_dataset = test_dataset.padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(test_dataset))
+train_size = len(list(train_dataset))
+test_size = len(list(test_dataset))
+print('Train set size:', train_size)    # 25000 examples
+print('Test set size:', test_size)      # 25000 examples
+
+# 每个batch分别pad，最后的长度不同
+train_dataset = train_dataset.shuffle(BUFFER_SIZE).padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(train_dataset)).repeat()
+test_dataset = test_dataset.padded_batch(BATCH_SIZE, tf.compat.v1.data.get_output_shapes(test_dataset)).repeat()
 
 # tokenizer = info.features['text'].encoder
 # VOCAB_SIZE = tokenizer.vocab_size -> 32650
 
 # build model
+# 用于嵌入层和全连接层的初始化
+embed_init = tf.keras.initializers.RandomUniform(-0.5, 0.5)
+fc_init = tf.keras.initializers.RandomUniform(-0.5, 0.5)
+bias_init = tf.keras.initializers.Zeros()
+
 model = tf.keras.Sequential([
-    tf.keras.layers.Embedding(VOCAB_SIZE, EMBED_DIM),
+    tf.keras.layers.Embedding(VOCAB_SIZE, EMBED_DIM, embeddings_initializer=embed_init),
     tf.keras.layers.Bidirectional(
         tf.keras.layers.LSTM(
             EMBED_DIM, dropout=DROPOUT, return_sequences=True
@@ -37,8 +48,12 @@ model = tf.keras.Sequential([
         tf.keras.layers.LSTM(
             EMBED_DIM, dropout=DROPOUT, return_sequences=False
             )),
-    tf.keras.layers.Dense(EMBED_DIM, activation='relu'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
+    tf.keras.layers.Dense(
+        EMBED_DIM, activation='relu',
+        kernel_initializer=fc_init, bias_initializer=bias_init),
+    tf.keras.layers.Dense(
+        1, activation='sigmoid',
+        kernel_initializer=fc_init, bias_initializer=bias_init)
 ])
 
 model.compile(
@@ -49,21 +64,26 @@ model.compile(
 
 model.summary()
 
+# 取整计算每轮训练步数，避免报错：BaseCollectiveExecutor::StartAbort Out of range: End of sequence
+steps = train_size // BATCH_SIZE
+
 start_train = time.time()
 history = model.fit(
     train_dataset,
     epochs=EPOCHS,
-    validation_data = test_dataset
+    steps_per_epoch=steps
+    # validation_data = test_dataset,
 )
 print('Total training time: %.3f mins' % ((time.time() - start_train)/60))
 
 start_test = time.time()
-test_loss, test_acc = model.evaluate(test_dataset)
+test_loss, test_acc = model.evaluate(test_dataset, steps=steps)
 print('On test set: loss - %.5f, acc - %.5f' % (test_loss, test_acc))
 print('Total test time: %.3f secs' % (time.time() - start_test))
 
 model.save('models/dlf2.h5')
 
+'''
 # plt draw pics
 history_dict = history.history
 loss = history_dict['loss']
@@ -86,3 +106,4 @@ plt.title('Training and validation accuracy')
 plt.legend()
 
 plt.savefig('pics/dlf2.png')
+'''

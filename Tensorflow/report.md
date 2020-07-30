@@ -89,12 +89,17 @@
 |-|-|-|-|
 |22.01|99.70%|18.781|82.93%|
 
-* loss-epochs, acc-epochs 图像如下，虚线为训练集，实线为测试集（这里将测试集作为验证集使用）
+* 修正：取消测试集作为验证集，添加嵌入层和全连接层的初始化，每轮的训练步数取整到 390
+* 结果
+    * 训练时间 15.37 分钟，测试时间 18.80 秒；
+    * 训练集准确率为 0.9844，测试集准确率为 0.8375
+
+<!-- * loss-epochs, acc-epochs 图像如下，虚线为训练集，实线为测试集（这里将测试集作为验证集使用）
 * 存在问题
     * 从图像来看，存在过拟合问题，可能因为没有采取正则化；  
     * 在测试集上的表现较差，可能因为 LSTM 适于分析全局的长期性结构，在情感分析问题上表现得差一些。
 
-<img src="imgs/dlf2.png" width="600"><br>
+<img src="imgs/dlf2.png" width="600"><br> -->
 
 * * * 
 ## 3. Text Sentiment Analysis - Bert
@@ -196,10 +201,6 @@
     * 优化器 Adam，学习率 2e-4，betas (0.5, 0.999)
     * 生成器和判别器的特征图均为 64 x 64
     * 生成器输入随机向量的维度是 100
-* 生成器模型
-    <br><img src="imgs/gen.png" width="400">
-* 判别器模型
-    <br><img src="imgs/disc.png" width="400">
 * 损失函数取二元交叉熵。生成器考虑生成图片是否被判定为真，判别器考虑是否判定生成图片为假，以及是否判定原图片为真；
 * 优化器都采取 Adam，参数设置相同；
 * 每轮训练分批进行，对于每个训练步骤（一个batch）：
@@ -210,7 +211,11 @@
     * 应用优化器，更新模型参数。
 
 #### 实验结果
-1. 采取官方教程的模型 dcgan_tutorial.py
+1. 采取tf官方教程的模型，实现文件为 dcgan_tutorial.py
+* 生成器模型
+    <br><img src="imgs/gan_gen.png" width="480">
+* 判别器模型
+    <br><img src="imgs/gan_disc.png" width="480">
 
 |Generator loss|Discriminator loss|Training time/minutes|
 |--|--|--|
@@ -222,14 +227,19 @@
 
 <img src="imgs/dcgan.png" width="480">
 
-2. 采取如上所示的，和 pytorch 相同的模型
+2. 采取和 pytorch 相同的模型
+* 生成器模型
+    <br><img src="imgs/gen.png" width="400">
+* 判别器模型
+    <br><img src="imgs/disc.png" width="400">
 
 |Generator loss|Discriminator loss|Training time/minutes|
 |--|--|--|
-|0.313|1.627|9.51|
+|0.693|1.006|9.51|
 
-<img src="imgs/gan_img.png" width="480">
+<img src="imgs/gan.png" width="480">
 
+* 存在问题：损失很快收敛到 generator - 0.693, discriminator - 1.006 不再变化，作为 dcgan 的损失问题较大，正常应该是生成器的损失较大，判别器的损失较小（0.6左右），生成的图像如上，效果不是很好。
 
 * * *
 ## 5. Image Translation
@@ -284,17 +294,17 @@
 * * *
 ## 对比
 
-|Model|Framework|Test acc|Training time|Test time|
-|--|--|--|--|--|
+|Model|Framework|Test acc|Training time|Test time|备注|
+|--|--|--|--|--|--|
 |VGG16|Pytorch|76.57%|26.93 min|4.235 s|
-||Tensorflow|78.43%|13.29 min|1.185 s|
-|BiLSTM|Pytorch|98.6%|5.05 min|5.74 s|
-||Tensorflow|82.93%|22.01 min|18.78 s|
-|Bert|Pytorch|98.2%|16.24 min|196.96 s|
-||Tensorflow|88.69%|16.03 min|111.13 s|
+||Tensorflow|78.43%|13.29 min|1.185 s|？训练和测试时间较短|
+|BiLSTM|Pytorch|98.6%|5.05 min|5.74 s|准确率有误<br>测试结果：84.6%|
+||Tensorflow|83.75%|15.37 min|18.80 s|？训练和测试时间较长|
+|Bert|Pytorch|98.2%|16.24 min|196.96 s|准确率有误<br>测试结果：93.9%|
+||Tensorflow|88.69%|16.03 min|111.13 s|训练集准确率为 92% 左右<br>？测试集上模型准确率较低|
 
 |Model|Framework|Disc loss|Gen loss|Time|备注|
-|--|--|--|--|--|
+|--|--|--|--|--|--|
 |DCGAN|Pytorch|0.4969|3.1592|20.45 min||
-||Tensorflow|1.627|0.313|9.51 min||
-||Tensorflow|1.133|1.069|2.88 min|采取tf_tutorial模型|
+||Tensorflow|1.006|0.693|9.51 min|？生成图像效果较差，<br>损失存在问题|
+||Tensorflow|1.133|1.069|2.88 min|采取tf-tutorial示例的模型|

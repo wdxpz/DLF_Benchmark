@@ -29,27 +29,28 @@ train_images = tf.image.resize(train_images, [64, 64])
 train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 # build models: generator and discriminator
-initializer = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
-bn_init_g = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
-bn_init_b = tf.keras.initializers.Zeros()
+conv_init = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
+bn_init = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
+# bn中，默认 beta_initializer="zeros"
+# bn_init_b = tf.keras.initializers.Zeros()
 
 def make_generator_model():
     model = tf.keras.Sequential()
 
     model.add(layers.Conv2DTranspose(NGF*8, (4,4), strides=(1,1), padding='valid', use_bias=False, input_shape=(1, 1, NOISE_DIM)))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.ReLU())
     
     model.add(layers.Conv2DTranspose(NGF*4, (4,4), strides=(2,2), padding='same', use_bias=False))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.ReLU())
     
     model.add(layers.Conv2DTranspose(NGF*2, (4,4), strides=(2,2), padding='same', use_bias=False))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.ReLU())
     
     model.add(layers.Conv2DTranspose(NGF, (4,4), strides=(2,2), padding='same', use_bias=False))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.ReLU())
     
     model.add(layers.Conv2DTranspose(1, (4,4), strides=(2,2), padding='same', use_bias=False, activation='tanh'))
@@ -57,22 +58,22 @@ def make_generator_model():
 
 def make_discriminator_model():
     model = tf.keras.Sequential()
-    model.add(layers.Conv2D(NDF, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=initializer, input_shape=(64, 64, 1)))
+    model.add(layers.Conv2D(NDF, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=conv_init, input_shape=(64, 64, 1)))
     model.add(layers.LeakyReLU(0.2))
 
-    model.add(layers.Conv2D(NDF*2, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=initializer))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.Conv2D(NDF*2, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=conv_init))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.LeakyReLU(0.2))
     
-    model.add(layers.Conv2D(NDF*4, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=initializer))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.Conv2D(NDF*4, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=conv_init))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.LeakyReLU(0.2))
 
-    model.add(layers.Conv2D(NDF*8, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=initializer))
-    model.add(layers.BatchNormalization(beta_initializer=bn_init_b, gamma_initializer=bn_init_g))
+    model.add(layers.Conv2D(NDF*8, (4,4), strides=(2,2), padding='same', use_bias=False, kernel_initializer=conv_init))
+    model.add(layers.BatchNormalization(gamma_initializer=bn_init))
     model.add(layers.LeakyReLU(0.2))
 
-    model.add(layers.Conv2D(1, (4,4), strides=(1,1), padding='valid', use_bias=False, kernel_initializer=initializer, activation='sigmoid'))
+    model.add(layers.Conv2D(1, (4,4), strides=(1,1), padding='valid', use_bias=False, kernel_initializer=conv_init, activation='sigmoid'))
     return model
 
 generator = make_generator_model()

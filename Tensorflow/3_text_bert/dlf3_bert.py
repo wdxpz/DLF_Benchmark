@@ -80,6 +80,7 @@ optimizer, _ = transformers.create_optimizer(
   num_warmup_steps=0,
   adam_epsilon=EPSILON
 )
+optimizer.clipnorm = 1.0
 '''
 optimizer = transformers.AdamWeightDecay(
     learning_rate=ALPHA, 

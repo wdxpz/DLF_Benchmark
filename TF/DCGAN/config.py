@@ -14,4 +14,5 @@ DCGAN_Config = {
     'nc': 1, #image channels
     'ngf': 64, #feature map size in generator
     'ndf': 64, #feature map size in discriminator
+    'num_examples_to_generate': 64
 }

@@ -9,12 +9,40 @@ import json
 import tarfile
 
 
+
+def build_sample_file(imdb_dir, des_file, mode='train'):
+    all_files = {}
+    pos_dir = os.path.join(imdb_dir, 'aclImdb/{}/pos/*.txt'.format(mode))
+    pos_text_files = glob.glob(pos_dir)
+    neg_dir = os.path.join(imdb_dir, 'aclImdb/{}/neg/*.txt'.format(mode))
+    neg_text_files = glob.glob(neg_dir)
+    all_files = {
+        '1': pos_text_files,
+        '0': neg_text_files
+        }
+    with open(des_file, 'wt') as dst_f:
+        dst_f.write('label\ttext_a\n')
+        for label, texts in all_files.items():
+            for text_file in texts:
+                with open(text_file, "rt") as src_f:
+                    content = src_f.read().replace('\t', ' ')
+                    content = '{}\t{}\n'.format(label, content)
+                    if content[:-1].find('\n') > 0:
+                        raise Exception('sample text has more than 1 lines!')
+                    if len(content.split('\t')) > 2:
+                        print(len(content.split('\t')))
+                        raise Exception('sample text has [tab]!')
+                    dst_f.write(content)
+
+    print('write total {} smaple in {} file'.format(len(pos_text_files)+len(neg_text_files), mode))
+
+
 # configs
 max_seqlen = 128
 batch_size = 64
 num_epochs = 3
 lr = 1e-5
-weight_decay = 1e-5
+weight_decay = 1e-6
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 model_dir = os.path.join(base_dir, 'model/bert_model/pretrain/BERT-en-uncased-base')
 checkpoint_dir = os.path.join(base_dir, 'model/bert_model/checkpoints')
@@ -58,32 +86,6 @@ if not os.path.exists(train_file) or not os.path.exists(test_file):
     print('buld test file')
     build_sample_file(imdb_dir, test_file, 'test')
 
-
-def build_sample_file(imdb_dir, des_file, mode='train'):
-    all_files = {}
-    pos_dir = os.path.join(imdb_dir, 'aclImdb/{}/pos/*.txt'.format(mode))
-    pos_text_files = glob.glob(pos_dir)
-    neg_dir = os.path.join(imdb_dir, 'aclImdb/{}/neg/*.txt'.format(mode))
-    neg_text_files = glob.glob(neg_dir)
-    all_files = {
-        '1': pos_text_files,
-        '0': neg_text_files
-        }
-    with open(des_file, 'wt') as dst_f:
-        dst_f.write('label\ttext_a\n')
-        for label, texts in all_files.items():
-            for text_file in texts:
-                with open(text_file, "rt") as src_f:
-                    content = src_f.read().replace('\t', ' ')
-                    content = '{}\t{}\n'.format(label, content)
-                    if content[:-1].find('\n') > 0:
-                        raise Exception('sample text has more than 1 lines!')
-                    if len(content.split('\t')) > 2:
-                        print(len(content.split('\t')))
-                        raise Exception('sample text has [tab]!')
-                    dst_f.write(content)
-
-    print('write total {} smaple in {} file'.format(len(pos_text_files)+len(neg_text_files), mode))
 
 def res_evaluate(predits_file=pred_file, test_file=test_file):
     labels = []

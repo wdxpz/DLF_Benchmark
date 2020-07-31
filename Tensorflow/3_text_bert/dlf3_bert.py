@@ -16,7 +16,7 @@ BATCH_SIZE = 32
 EPOCHS = 3
 MAXLEN = 128
 ALPHA = 1e-5
-EPSILON = 1e-5
+EPSILON = 1e-6
 
 # load data
 (train_data, test_data), info = tfds.load(

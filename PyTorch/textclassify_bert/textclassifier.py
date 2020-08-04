@@ -38,7 +38,7 @@ class TextClassifier(object):
         self.print_every = config['print_every']
 
         #device
-        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         # network
         self.net, self.tokenizer, self.bert_config = self._init_network()
         print(self.net, self.tokenizer, self.bert_config)
@@ -102,7 +102,7 @@ class TextClassifier(object):
         labels = torch.tensor([1 if entry.label.lower()=='pos' else 0 for entry in batch])
 
         texts = [self.tokenizer.encode(' '.join(entry.text), add_special_tokens=True, max_length=self.max_sent_len,
-                                       pad_to_max_length=True) for entry in batch]
+                                       pad_to_max_length=True, truncation=True) for entry in batch]
 
         attention_masks = [[int(token_id > 0) for token_id in seq] for seq in texts]
 

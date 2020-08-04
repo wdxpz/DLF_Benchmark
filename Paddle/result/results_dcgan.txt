@@ -1,0 +1,32 @@
+
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.02018916607kpis,dcgan_g_train_cost,0.689638853073kpis,dcgan_duration,3360.18002033
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.02656912804kpis,dcgan_g_train_cost,0.688779294491kpis,dcgan_duration,3364.6943574
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.02653682232kpis,dcgan_g_train_cost,0.688929140568kpis,dcgan_duration,3378.00408077
+
+
+
+*********split here, the above results come from netwrok with two fc layers***************
+
+
+
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.02757060528kpis,dcgan_g_train_cost,0.690558969975kpis,dcgan_duration,2058.35204172
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.02661561966kpis,dcgan_g_train_cost,0.690258860588kpis,dcgan_duration,2070.04504347
+
+
+\ dcgan results:
+kpis,dcgan_d_train_cost,1.02612113953kpis,dcgan_g_train_cost,0.690399944782kpis,dcgan_duration,2079.32000422

@@ -1,0 +1,11 @@
+version: '2.3'
+services:
+  dlf_benchmark_paddle_container:
+    image: "dlf_benchmark_paddle"
+    volumes:
+      - /home/si/DLF_Benchmark:/workspace:cached
+    network_mode: "host"
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+    command: /bin/sh -c "while sleep 1000; do :; done"

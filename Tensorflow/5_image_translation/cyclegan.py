@@ -1,228 +1,332 @@
+import time
+import sys
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-
 from tensorflow_examples.models.pix2pix import pix2pix
+import matplotlib.pyplot as plt
+
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-EPOCHS = 100
-ALPHA = 2e-4
-BETA = 0.5
-# REGTERM = 10
-BATCH_SIZE = 8
-BUFFER_SIZE = 1000
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
-CHANNELS = 3
-
-# load dataset
-dataset, metadata = tfds.load(
-  'cycle_gan/horse2zebra', with_info=True, as_supervised=True)
+dataset, metadata = tfds.load('cycle_gan/horse2zebra',
+                              with_info=True, as_supervised=True)
 
 train_horses, train_zebras = dataset['trainA'], dataset['trainB']
 test_horses, test_zebras = dataset['testA'], dataset['testB']
 
-# image transforms
-# normalize to [-0.5, 0.5]
-def normalize(image):
-  image = tf.cast(image, tf.float32)
-  # image = (image / 127.5) - 1
-  image = (image / 255) - 0.5
-  return image
+
+BUFFER_SIZE = 1000
+# BATCH_SIZE = 4
+BATCH_SIZE = 8
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
+
 
 def random_crop(image):
-  cropped_img = tf.image.random_crop(image, size=[IMG_HEIGHT, IMG_WIDTH, 3])
-  return cropped_img
+    cropped_image = tf.image.random_crop(
+        image, size=[IMG_HEIGHT, IMG_WIDTH, 3])
+
+    return cropped_image
+
+
+# normalizing the images to [-1, 1]
+def normalize(image):
+    image = tf.cast(image, tf.float32)
+    image = (image / 127.5) - 1
+    return image
+
 
 def random_jitter(image):
-  image = tf.image.resize(image, [286, 286], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-  image = random_crop(image)
-  image = tf.image.random_flip_left_right(image)
-  return image
+    # resizing to 286 x 286 x 3
+    image = tf.image.resize(image, [286, 286],
+                            method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-def process_train(image, label):
-  image = random_jitter(image)
-  image = normalize(image)
-  return image
+    # randomly cropping to 256 x 256 x 3
+    image = random_crop(image)
 
-def process_test(image, label):
-  image = normalize(image)
-  return image
+    # random mirroring
+    image = tf.image.random_flip_left_right(image)
+
+    return image
+
+
+def random_jitter(image):
+    # resizing to 286 x 286 x 3
+    image = tf.image.resize(image, [286, 286],
+                            method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+
+    # randomly cropping to 256 x 256 x 3
+    image = random_crop(image)
+
+    # random mirroring
+    image = tf.image.random_flip_left_right(image)
+
+    return image
+
+
+def preprocess_image_train(image, label):
+    image = random_jitter(image)
+    image = normalize(image)
+    return image
+
+
+def preprocess_image_test(image, label):
+    image = normalize(image)
+    return image
+
 
 train_horses = train_horses.map(
-  process_train, num_parallel_calls=AUTOTUNE).cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
+    preprocess_image_train, num_parallel_calls=AUTOTUNE).cache().shuffle(
+    BUFFER_SIZE).batch(BATCH_SIZE)
+
 train_zebras = train_zebras.map(
-  process_train, num_parallel_calls=AUTOTUNE).cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
+    preprocess_image_train, num_parallel_calls=AUTOTUNE).cache().shuffle(
+    BUFFER_SIZE).batch(BATCH_SIZE)
 
 test_horses = test_horses.map(
-  process_test, num_parallel_calls=AUTOTUNE).cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
+    preprocess_image_test, num_parallel_calls=AUTOTUNE).cache().shuffle(
+    BUFFER_SIZE).batch(BATCH_SIZE)
+
 test_zebras = test_zebras.map(
-  process_test, num_parallel_calls=AUTOTUNE).cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
+    preprocess_image_test, num_parallel_calls=AUTOTUNE).cache().shuffle(
+    BUFFER_SIZE).batch(BATCH_SIZE)
 
-sample_horse = next(iter(train_horses))
-sample_zebra = next(iter(train_zebras))
 
-# import model from pix2pix
-# generator gen_g: x -> y
-gen_g = pix2pix.unet_generator(CHANNELS, norm_type='instancenorm')
-# generator gen_f: y -> x
-gen_f = pix2pix.unet_generator(CHANNELS, norm_type='instancenorm')
-# discriminator x: real x or generated x
-disc_x = pix2pix.discriminator(norm_type='instancenorm', target=False)
-# discriminator y: real y or generated y
-disc_y = pix2pix.discriminator(norm_type='instancenorm', target=False)
+OUTPUT_CHANNELS = 3
 
-# loss function
-loss_f = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+generator_g = pix2pix.unet_generator(OUTPUT_CHANNELS, norm_type='instancenorm')
+generator_f = pix2pix.unet_generator(OUTPUT_CHANNELS, norm_type='instancenorm')
 
-def discriminator_loss(real, fake):
-  real_loss = loss_f(tf.ones_like(real), real)
-  fake_loss = loss_f(tf.zeros_like(fake), fake)
-  total_disc_loss = real_loss + fake_loss
-  return total_disc_loss * 0.5
+discriminator_x = pix2pix.discriminator(norm_type='instancenorm', target=False)
+discriminator_y = pix2pix.discriminator(norm_type='instancenorm', target=False)
 
-def generator_loss(fake):
-  return loss_f(tf.ones_like(fake), fake)
 
 LAMBDA = 10
 
-def cycle_loss(real, cycled):
-  c_loss = tf.reduce_mean(tf.abs(real - cycled))
-  return LAMBDA * c_loss
+loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
-def identity_loss(real, same):
-  i_loss = tf.reduce_mean(tf.abs(real - same))
-  return LAMBDA * 0.5 * i_loss
 
-# set optimizers for generators and discriminators
-gen_g_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
-gen_f_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
+def discriminator_loss(real, generated):
+    real_loss = loss_obj(tf.ones_like(real), real)
 
-disc_x_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
-disc_y_opt = tf.keras.optimizers.Adam(lr=ALPHA, beta_1=BETA)
+    generated_loss = loss_obj(tf.zeros_like(generated), generated)
 
-# add checkpoints
-checkpoint_path = "checkpoints/cyclegan"
-ckpt = tf.train.Checkpoint(
-  gen_g = gen_g,
-  gen_f = gen_f,
-  disc_x = disc_x,
-  disc_y = disc_y,
-  gen_g_opt = gen_g_opt,
-  gen_f_opt = gen_f_opt,
-  disc_x_opt = disc_x_opt,
-  disc_y_opt = disc_y_opt)
-ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=10)
+    total_disc_loss = real_loss + generated_loss
 
-'''
-# 如果存在检查点，恢复最新版本检查点
+    return total_disc_loss * 0.5
+
+
+def generator_loss(generated):
+    return loss_obj(tf.ones_like(generated), generated)
+
+
+def calc_cycle_loss(real_image, cycled_image):
+    loss1 = tf.reduce_mean(tf.abs(real_image - cycled_image))
+
+    return LAMBDA * loss1
+
+
+def identity_loss(real_image, same_image):
+    loss = tf.reduce_mean(tf.abs(real_image - same_image))
+    return LAMBDA * 0.5 * loss
+
+
+
+boundaries = [50, 150]
+values = [0.0002, 0.00002, 0.000002]
+
+learning_rate_fn = tf.keras.optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
+optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)
+
+
+generator_g_optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn, beta_1=0.5)
+generator_f_optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn, beta_1=0.5)
+
+discriminator_x_optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn, beta_1=0.5)
+discriminator_y_optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn, beta_1=0.5)
+
+
+# generator_g_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+# generator_f_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+
+# discriminator_x_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+# discriminator_y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+
+
+checkpoint_path = "./checkpoints/train"
+
+ckpt = tf.train.Checkpoint(generator_g=generator_g,
+                           generator_f=generator_f,
+                           discriminator_x=discriminator_x,
+                           discriminator_y=discriminator_y,
+                           generator_g_optimizer=generator_g_optimizer,
+                           generator_f_optimizer=generator_f_optimizer,
+                           discriminator_x_optimizer=discriminator_x_optimizer,
+                           discriminator_y_optimizer=discriminator_y_optimizer)
+
+ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
+
+# if a checkpoint exists, restore the latest checkpoint.
 if ckpt_manager.latest_checkpoint:
-  ckpt.restore(ckpt_manager.latest_checkpoint)
-  print ('Latest checkpoint restored')
-'''
+    ckpt.restore(ckpt_manager.latest_checkpoint)
+    print('*** Latest checkpoint restored!! ***')
 
-# draw pics
-def generate_images(model, input, idx, train_or_not):
-    prediction = model(input)
-    plt.figure(figsize=(12, 8))
 
-    display_list = [input[0], prediction[0]]
-    title = ['Input Image', 'Predicted Image']
-
-    for i in range(2):
-        plt.subplot(1, 2, i+1)
-        plt.title(title[i])
-        # img = np.clip(display_list[i]*0.5+0.5, 0, 1)
-        img = np.clip(display_list[i]+0.5, 0, 1)
-        plt.imshow(img)
-        plt.axis('off')
-    if train_or_not:
-      if((idx+1)%10==0):
-        plt.savefig('pics/cyclegan/train_image_{:02d}.png'.format(idx))
-    else:
-      plt.savefig('pics/cyclegan/test_image_{:02d}.png'.format(idx))
-
-# training
 @tf.function
 def train_step(real_x, real_y):
-  with tf.GradientTape(persistent=True) as tape:
-    fake_y = gen_g(real_x, training=True)
-    cycled_x = gen_f(fake_y, training=True)
-    
-    fake_x = gen_f(real_y, training=True)
-    cycled_y = gen_g(fake_x, training=True)
-    
-    same_y = gen_g(real_y, training=True)
-    same_x = gen_f(real_x, training=True)
+    # persistent is set to True because the tape is used more than
+    # once to calculate the gradients.
+    with tf.GradientTape(persistent=True) as tape:
+        # Generator G translates X -> Y
+        # Generator F translates Y -> X.
 
-    disc_real_x = disc_x(real_x, training=True)
-    disc_real_y = disc_y(real_y, training=True)
-    
-    disc_fake_x = disc_x(fake_x, training=True)
-    disc_fake_y = disc_y(fake_y, training=True)
+        fake_y = generator_g(real_x, training=True)
+        cycled_x = generator_f(fake_y, training=True)
 
-    gen_g_loss = generator_loss(disc_fake_y)
-    gen_f_loss = generator_loss(disc_fake_x)
+        fake_x = generator_f(real_y, training=True)
+        cycled_y = generator_g(fake_x, training=True)
 
-    total_cycle_loss = cycle_loss(real_x, cycled_x) + cycle_loss(real_y, cycled_y)
-    # total generator losses
-    total_g_loss = total_cycle_loss + gen_g_loss + identity_loss(real_y, same_y)
-    total_f_loss = total_cycle_loss + gen_f_loss + identity_loss(real_x, same_x)
-    # total discriminator losses
-    disc_x_loss = discriminator_loss(disc_real_x, disc_fake_x)
-    disc_y_loss = discriminator_loss(disc_real_y, disc_fake_y)
+        # same_x and same_y are used for identity loss.
+        same_x = generator_f(real_x, training=True)
+        same_y = generator_g(real_y, training=True)
 
-  gen_g_grads = tape.gradient(total_g_loss, gen_g.trainable_variables)
-  gen_f_grads = tape.gradient(total_f_loss, gen_f.trainable_variables)
-  disc_x_grads = tape.gradient(disc_x_loss, disc_x.trainable_variables)
-  disc_y_grads = tape.gradient(disc_y_loss, disc_y.trainable_variables)
+        disc_real_x = discriminator_x(real_x, training=True)
+        disc_real_y = discriminator_y(real_y, training=True)
 
-  gen_g_opt.apply_gradients(zip(gen_g_grads, gen_g.trainable_variables))
-  gen_f_opt.apply_gradients(zip(gen_f_grads, gen_f.trainable_variables))
-  disc_x_opt.apply_gradients(zip(disc_x_grads, disc_x.trainable_variables))
-  disc_y_opt.apply_gradients(zip(disc_y_grads, disc_y.trainable_variables))
+        disc_fake_x = discriminator_x(fake_x, training=True)
+        disc_fake_y = discriminator_y(fake_y, training=True)
 
-  return total_g_loss, total_f_loss, disc_x_loss, disc_y_loss
+        # calculate the loss
+        gen_g_loss = generator_loss(disc_fake_y)
+        gen_f_loss = generator_loss(disc_fake_x)
+
+        total_cycle_loss = calc_cycle_loss(
+            real_x, cycled_x) + calc_cycle_loss(real_y, cycled_y)
+
+        # Total generator loss = adversarial loss + cycle loss
+        total_gen_g_loss = gen_g_loss + \
+            total_cycle_loss + identity_loss(real_y, same_y)
+        total_gen_f_loss = gen_f_loss + \
+            total_cycle_loss + identity_loss(real_x, same_x)
+
+        disc_x_loss = discriminator_loss(disc_real_x, disc_fake_x)
+        disc_y_loss = discriminator_loss(disc_real_y, disc_fake_y)
+
+    # Calculate the gradients for generator and discriminator
+    generator_g_gradients = tape.gradient(total_gen_g_loss,
+                                          generator_g.trainable_variables)
+    generator_f_gradients = tape.gradient(total_gen_f_loss,
+                                          generator_f.trainable_variables)
+
+    discriminator_x_gradients = tape.gradient(disc_x_loss,
+                                              discriminator_x.trainable_variables)
+    discriminator_y_gradients = tape.gradient(disc_y_loss,
+                                              discriminator_y.trainable_variables)
+
+    # Apply the gradients to the optimizer
+    generator_g_optimizer.apply_gradients(zip(generator_g_gradients,
+                                              generator_g.trainable_variables))
+
+    generator_f_optimizer.apply_gradients(zip(generator_f_gradients,
+                                              generator_f.trainable_variables))
+
+    discriminator_x_optimizer.apply_gradients(zip(discriminator_x_gradients,
+                                                  discriminator_x.trainable_variables))
+
+    discriminator_y_optimizer.apply_gradients(zip(discriminator_y_gradients,
+                                                  discriminator_y.trainable_variables))
 
 
-training_start = time.time()
 
-for epoch in range(EPOCHS):
-    start = time.time()
-    gloss = []
-    floss = []
-    dxloss = []
-    dyloss = []
-    for image_x, image_y in tf.data.Dataset.zip((train_horses, train_zebras)):
-        total_g_loss, total_f_loss, disc_x_loss, disc_y_loss = train_step(image_x, image_y)
-        gloss.append(total_g_loss.numpy())
-        floss.append(total_f_loss.numpy())
-        dxloss.append(disc_x_loss.numpy())
-        dyloss.append(disc_y_loss.numpy())
-    
-    print('Epoch %d: generator losses: %.3f, %.3f; discriminator losses: %.3f, %.3f' % (
-      epoch+1, 
-      sum(gloss)/len(gloss), 
-      sum(floss)/len(floss), 
-      sum(dxloss)/len(dxloss), 
-      sum(dyloss)/len(dyloss)))
-    
-    print ('Time taken for this epoch is %.3f sec\n' % (time.time()-start))
-    generate_images(gen_g, sample_horse, epoch, True)
-    generate_images(gen_f, sample_zebra, epoch+EPOCHS, True)
-    # save checkpoints
-    if (epoch+1)%5==0:
-      ckpt_manager.save()
+def generate_images(model, test_input, name):
+    prediction = model(test_input)
+    display_list = [test_input[0], prediction[0]]
+    plt.imshow(test_input[0] * 0.5 + 0.5)
+    plt.axis('off')
+    plt.savefig("{}.png".format(name + "_org"), bbox_inches='tight')
+    # plt.title('Horse')
+    plt.imshow(prediction[0] * 0.5 + 0.5)
+    plt.axis('off')
+    plt.savefig("{}.png".format(name), bbox_inches='tight')
 
-print('Toal training time: %.3f secs' % (time.time()-training_start))
 
-idx = 1
-for inp in test_horses.take(5):
-    generate_images(gen_g, inp, idx, False)
-    idx += 1
+if __name__ == "__main__":
+    args = sys.argv
+    print(args)
+    if len(args) == 1:
+        print("please specify train / test")
+        exit(0)
+    else:
+        purpose = args[1]
+        if purpose.lower() == 'train':
+            #  training process
+            print('training...')
+            EPOCHS = 200
+            for epoch in range(EPOCHS):
+                print("Epoch {} / {} ...".format(epoch + 1, EPOCHS))
+                start = time.time()
 
-for inp in test_zebras.take(5):
-    generate_images(gen_f, inp, idx, False)
-    idx += 1
+                n = 0
+                for image_x, image_y in tf.data.Dataset.zip((train_horses, train_zebras)):
+                    train_step(image_x, image_y)
+                    if n % 10 == 0:
+                        print('.', end='')
+                    n += 1
+                if (epoch + 1) % 5 == 0:
+                    ckpt_save_path = ckpt_manager.save()
+                    print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
+                                                                        ckpt_save_path))
+
+                print('Time taken for epoch {} is {} sec\n'.format(epoch + 1,
+                                                                time.time()-start))
+            print("*****testing horse to zebra*******")
+            TEST_DIR = "test_data/A"
+            IMG_EXT = ["jpg", "jpeg", "png"]
+            images = os.listdir(TEST_DIR)
+            images = [img for img in images if img.split('.')[-1].lower() in IMG_EXT]
+            for i, img in enumerate(images, 1):
+                img_path = os.path.join(TEST_DIR, img)
+                # print(img_path)
+                image_bytes = open(img_path, 'rb')
+                image = tf.io.decode_jpeg(image_bytes.read(), channels=3)
+                image = tf.expand_dims(image, 0)
+                image = preprocess_image_test(image, None)
+                # print(image.shape)
+                generate_images(generator_g, image, "horse_" + str(i))
+            
+            print("testing zebra to horse")
+            TEST_DIR = "test_data/B"
+            IMG_EXT = ["jpg", "jpeg", "png"]
+            images = os.listdir(TEST_DIR)
+            images = [img for img in images if img.split('.')[-1].lower() in IMG_EXT]
+            for i, img in enumerate(images, 1):
+                img_path = os.path.join(TEST_DIR, img)
+                # print(img_path)
+                image_bytes = open(img_path, 'rb')
+                image = tf.io.decode_jpeg(image_bytes.read(), channels=3)
+                image = tf.expand_dims(image, 0)
+                image = preprocess_image_test(image, None)
+                # print(image.shape)
+                generate_images(generator_f, image, "zebra_" + str(i))
+        elif purpose.lower() == 'test':
+            # testing process
+            print("testing ....")
+            TEST_DIR = "test_data/B"
+            IMG_EXT = ["jpg", "jpeg", "png"]
+            images = os.listdir(TEST_DIR)
+            images = [img for img in images if img.split('.')[-1].lower() in IMG_EXT]
+            for i, img in enumerate(images, 1):
+                img_path = os.path.join(TEST_DIR, img)
+                # print(img_path)
+                image_bytes = open(img_path, 'rb')
+                image = tf.io.decode_jpeg(image_bytes.read(), channels=3)
+                image = tf.expand_dims(image, 0)
+                image = preprocess_image_test(image, None)
+                # print(image.shape)
+                generate_images(generator_g, image, "horse_" + str(i))
+            
+        else:
+            print("invalid param!")
+            exit(0)

@@ -2,15 +2,9 @@
 /PyTorch/.idea/*
 /PyTorch/data/*
 /PyTorch/*.pyc
-/TF/.idea/*
-/TF/data/*
-/TF/model/*
-/TF/*.pyc
-/Notebook/checkpoints/*
-/Notebook/dataset/*
-/Notebook/.idea/*
-/Notebook/.ipynb_checkpoints/*
 /Paddle/model/*
 /Paddle/data/*
 /Paddle/*.pyc
 /Paddle/.ipynb_checkpoints/*
+.DS_Store
+*/.DS_Store

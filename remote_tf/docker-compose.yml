@@ -3,7 +3,7 @@ services:
   dlf_benchmark_tf_container:
     image: "dlf_benchmark_tf"
     volumes:
-      - /home/si/DLF_Benchmark:/workspace:cached
+      - /home/si/dlf:/workspace:cached
     network_mode: "host"
     runtime: nvidia
     environment:

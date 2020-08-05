@@ -17,6 +17,7 @@ def init(config):
     print(device)
 
     vgg16 = torchvision.models.vgg16(pretrained=False, progress=True)
+    vgg16.classifier[6].out_features = 10
 
     transform = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),

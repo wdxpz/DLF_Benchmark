@@ -5,8 +5,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
-from .config import DCGAN_Config
-from .network import make_generator_model, make_discriminator_model 
+from config import DCGAN_Config
+from network import make_generator_model, make_discriminator_model 
 
 
 # Set random seed for reproducibility

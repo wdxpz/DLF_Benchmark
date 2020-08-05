@@ -3,7 +3,7 @@ services:
   dlf_benchmark_torch_container:
     image: "dlf_benchmark_torch"
     volumes:
-      - /home/si/DLF_Benchmark:/workspace:cached
+      - /home/si/dlf:/workspace:cached
     network_mode: "host"
     shm_size: '8gb'
     runtime: nvidia

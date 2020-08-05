@@ -1,10 +1,16 @@
 .vscode/
 /PyTorch/.idea/*
+/PyTorch/model/*
 /PyTorch/data/*
 /PyTorch/*.pyc
+/Paddle/.idea/*
 /Paddle/model/*
 /Paddle/data/*
 /Paddle/*.pyc
 /Paddle/.ipynb_checkpoints/*
+/Tensorflow/.idea/*
+/Tensorflow/model/*
+/Tensorflow/data/*
+/Tensorflow/*.pyc
 .DS_Store
 */.DS_Store

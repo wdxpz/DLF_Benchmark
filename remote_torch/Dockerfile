@@ -1,4 +1,4 @@
 FROM pytorch/pytorch:latest
 
 #install robotmaster requirements
-RUN pip install pandas matplotlib jupyter dominate 
+RUN pip install transformers torchtext pandas matplotlib jupyter dominate 

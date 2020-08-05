@@ -1,13 +1,13 @@
 
 
 training results:
- total training time: 	 423.88554430007935
- final average D_loss and G_loss: 4.5820 / 0.2512
+ total training time: 	 424.54719042778015
+ final average D_loss and G_loss: 4.1606 / 0.3535
 
 training results:
- total training time: 	 426.0834789276123
- final average D_loss and G_loss: 4.3994 / 0.3568
+ total training time: 	 425.583642244339
+ final average D_loss and G_loss: 4.5159 / 0.2697
 
 training results:
- total training time: 	 426.02643752098083
- final average D_loss and G_loss: 4.4632 / 0.2692
+ total training time: 	 426.71632075309753
+ final average D_loss and G_loss: 4.4764 / 0.2899

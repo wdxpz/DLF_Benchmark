@@ -2,7 +2,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
-from .config import DCGAN_Config as conf
+from config import DCGAN_Config as conf
 
 def make_generator_model():
     model = tf.keras.Sequential()

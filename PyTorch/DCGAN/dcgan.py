@@ -46,7 +46,7 @@ class DCGAN(object):
         self.beta1 = config['beta1']
         self.batch_size = config['batch_size']
 
-        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print(self.device)
         self.real_data_loader = self._get_real_data()
         self.generator, self.discriminator = self._init_network()
@@ -152,7 +152,7 @@ class DCGAN(object):
                 ##train with real batch
                 #forward and calculate discriminator loss on real data
                 output = self.discriminator(real_data).view(-1)
-                label = torch.full((b_size,), real_label, device=self.device)
+                label = torch.full((b_size,), real_label, device=self.device, dtype=torch.float)
                 errD_real = criterion(output, label)
                 #calculate gradients for D in backdward pass
                 errD_real.backward()

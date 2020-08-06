@@ -5,11 +5,11 @@ This project is targeted evaluated the performances of three deep learning frame
 3. Baidu PaddlePaddle
 
 These three frameworks are evaluated by the following tasks:
-*. task1: image classification on CIFAR10 by VGG16
-*. task2: text sentimental classification on IMDB movie reviews by bi-lstm
-*. task3: text sentimental classification on IMDB movie reviews by bert
-*. task4: image generation on MINST dataset by DCGAN
-*. image translation on horse2zebra dataset by CycleGAN (Paddle implementation not included)
+* task1: image classification on CIFAR10 by VGG16
+* task2: text sentimental classification on IMDB movie reviews by bi-lstm
+* task3: text sentimental classification on IMDB movie reviews by bert
+* task4: image generation on MINST dataset by DCGAN
+* image translation on horse2zebra dataset by CycleGAN (Paddle implementation not included)
 
 
 # Project Structure

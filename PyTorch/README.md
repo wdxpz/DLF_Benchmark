@@ -17,4 +17,4 @@ python test_*.py
 # About dataset
 * dataset horse2zebra for CycleGAN
 you can download dataset horse2zebra from [here](https://www.kaggle.com/arnaud58/horse2zebra) 
-and then put it under directoy like `//path_to_whole_project/PyTorch/data/horse2zebra/trainA`
+and then put it under directoy like `/path_to_whole_project/PyTorch/data/horse2zebra/trainA`

@@ -9,7 +9,7 @@ import torchtext
 import torch.nn.functional as F
 from transformers import AdamW, get_linear_schedule_with_warmup
 
-from textclassify_bert.config import TextClassifier_Config
+from config import TextClassifier_Config
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')

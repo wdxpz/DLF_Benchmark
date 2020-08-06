@@ -1,6 +1,6 @@
 from .base_options import BaseOptions
 
-from ..config import RESULT_DIR
+from config import RESULT_DIR
 
 
 class TestOptions(BaseOptions):

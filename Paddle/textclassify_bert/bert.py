@@ -46,7 +46,12 @@ weight_decay = 1e-6
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 model_dir = os.path.join(base_dir, 'model/bert_model/pretrain/BERT-en-uncased-base')
 checkpoint_dir = os.path.join(base_dir, 'model/bert_model/checkpoints')
-data_dir = os.path.join(base_dir, 'data/imdb')
+data_dir = os.path.join(base_dir, 'data')
+if not os.path.exists(data_dir):
+    os.mkdir(data_dir)
+data_dir = os.path.join(data_dir, 'imdb')
+if not os.path.exists(data_dir):
+    os.mkdir(data_dir)
 vocab_path = os.path.join(model_dir, 'vocab.txt')
 
 

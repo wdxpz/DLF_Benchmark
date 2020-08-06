@@ -1,4 +1,4 @@
-from DCGAN.dcgan import DCGAN
+from dcgan import DCGAN
 
 num_repeat = 3
 

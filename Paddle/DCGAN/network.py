@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 import paddle
 import paddle.fluid as fluid
-from .utility import get_parent_function_name
+from utility import get_parent_function_name
 import os
 
 gf_dim = 64     #filters number of first layer in G

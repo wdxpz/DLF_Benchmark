@@ -1,130 +1,30 @@
-#Connect remote docker host for dev in vscode
+# Deep Learning Frameworks Performance Evaluation
+This project is targeted evaluated the performances of three deep learning frameworks on some different and typical deep nerual networks, including:
+1. Google TensorFlow
+2. Facebook PyTorch
+3. Baidu PaddlePaddle
 
-## 1. direct attach remote running containers
-* modify user setting.json by menu->preference->settings, or command+shift+p to open commend box and input settings
-```
-"docker.host":"ssh://your-remote-user@your-remote-machine-fqdn-or-ip-here"
-```
+These three frameworks are evaluated by the following tasks:
+*. task1: image classification on CIFAR10 by VGG16
+*. task2: text sentimental classification on IMDB movie reviews by bi-lstm
+*. task3: text sentimental classification on IMDB movie reviews by bert
+*. task4: image generation on MINST dataset by DCGAN
+*. image translation on horse2zebra dataset by CycleGAN (Paddle implementation not included)
 
-* at reomote host, start container with host network setting and directory mapping, and gpu enalbed
-```
-docker run -it -v ~/DLF_Benchmark:/project --network host --name dlf_benchmark --gpus 1 pytorch/pytorch
-```
 
-* close all vscode window, restart without any connection to existed local container
+# Project Structure
+All tasks implemented by these three frameworks are placed in three directories named by the framework. Three directories are:
+1. Tensorflow
+2. Pytorch
+3. Paddle
 
-* click `Remote Explorer' at the right side bar of vscode to attach wanted container, 
-** if the container is running as wanted, there will be a white dot under its icon **
+In each framework's directory, each task is implemented in directoy as:
+* task1 in directory: imageclassification
+* task2 in directory: textclassify_bilstm
+* task3 in directory: textclassify_bert
+* task4 in directory: DCGAN
+* task5 in directory: CycleGAN
 
-* install needed extension: docker, python in remote container (if python extension can not install, uninstall local python extension, and then retart the vscode by attaching the container)
-)  
+# Run the task
+Please refer the readme in each framework's directory
 
-## 2. open direcotry form container (recommended)
-* 2.1 clone project dirctory to remote host at `\remote_path_to_dev_dir`
-* 2.2 in the dev dir of local host `\local_path_to_dev_dir`, create subdir `remote`
-    ```
-    mkdir remote
-    cd remote
-    ```
-* 2.3 in `\local_path_to_dev_dir\remote`, create docker-compose.yml with required settings, like network, gpu, and dir mount,
-    **noted: the src in `volumes` should be the `\remote_path_to_dev_dir` **
-    `docker-compose.yml`
-    ```
-    version: '2.3'
-    services:
-      dlf_benchmark_container:
-      image: "pytorch/pytorch"
-    volumes:
-      - remote_path_to_dev_dir:/workspace:cached
-    network_mode: "host"
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-    ```
-    
-    To enable para `runtime: nvidia`, need to do the following works: (refer: https://github.com/docker/compose/issues/6691)
-    ```
-    at remote host:
-    
-    * install nvidia-docker-runtime:
-    https://github.com/NVIDIA/nvidia-container-runtime#docker-engine-setup
-
-    * add to /etc/docker/daemon.json
-    {
-    "runtimes": {
-    "nvidia": {
-    "path": "/usr/bin/nvidia-container-runtime",
-    "runtimeArgs": []
-    }
-    }
-    }
-
-    * after modify /etc/docker/daemon.json, restart docker service
-    systemctl restart docker
-
-    * use Compose format 2.3 and add runtime: nvidia to your GPU service. Docker Compose must be version 1.19.0 or higher, docker-compose file:
-        
-        version: '2.3'
-
-        services:
-        nvsmi:
-        image: ubuntu:16.04
-        runtime: nvidia
-        environment:
-        - NVIDIA_VISIBLE_DEVICES=all
-    ```
-
-* 2.4 start vscode, and open local dir of `\local_path_to_dev_dir\remote`
-* 2.5 from command panel, choose `Remote-Containers: open folder in container`, and then `choose docker compose file`
-* 2.6 after the container build, from command panel, choose `open locally`
-* 2.7 in `\local_path_to_dev_dir\remote\.devcontainer`, and modify `docker-compose.yml`
-    ```
-     volumes:
-      # Update this to wherever you want VS Code to mount the folder of your project
-      - \remote_path_to_dev_dir:/workspace:cached
-    ```
-* 2.7 from command panel, choose `reopen in container`, and choose `rebuild container` from the prommpt or from the command panel
-* 2.8 click any .py file to install Python extension, and then install pylint, reload docker extension and python extension
-
-* Done!
-
-# docker-compose at remote server
-```
-cd /path-to-DLF_Benchmark
-docker-compose up -d
-docker-compose exec dlf_benchmark_container bash
-```
-
-# Pytorch CycleGAN
-1. it is a key to set `--no_dropout' for train(it is deaultly set) and test(need manually set)
-
-2. to train the model, just use the deault parameters, set the additional dataroot, and model store dir
-```
-#`base_options`
-parser.add_argument('--dataroot', type=str, default=DATA_DIR, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
-parser.add_argument('--name', type=str, default='horse2zebra', ....)
-parser.add_argument('--checkpoints_dir', type=str, default=MODEL_DIR, help='models are saved here')
-```
-
-3. to test, and generated fake picutres
-    * set the `--no_dropout' and `dataroot` in the opt parameters in func `test()` in `test.py`
-    ```
-    opt.no_dropout = True
-    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/B")
-    ```
-
-    * Once your model has trained, copy over the last checkpoint to a format that the testing model can automatically detect:
-    if you want to transform images from class A to class B:
-    ```
-    cp ./checkpoints/horse2zebra/latest_net_G_A.pth ./checkpoints/horse2zebra/latest_net_G.pth
-
-    #in test.py
-    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/A")
-    ```
-
-    if you want to transform images from class B to class A.
-    ```
-    cp ./checkpoints/horse2zebra/latest_net_G_B.pth ./checkpoints/horse2zebra/latest_net_G.pth 
-    #in test.py
-    opt.dataroot = os.path.join(os.path.dirname(opt.dataroot), "test_horse/B")
-    ```

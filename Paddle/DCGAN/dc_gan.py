@@ -24,14 +24,15 @@ import six
 import numpy as np
 import paddle
 import time
+import requests
 import paddle.fluid as fluid
-from .utility import get_parent_function_name, plot, check, add_arguments, print_arguments
-from .network import G, D
+from utility import get_parent_function_name, plot, check, add_arguments, print_arguments
+from network import G, D
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import shutil
-from .reader import reader_creator, batch
+from reader import reader_creator, batch
 
 
 NOISE_SIZE = 100
@@ -43,7 +44,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
 # yapf: disable
 add_arg('batch_size',        int,   128,          "Minibatch size.")
-add_arg('epoch',             int,   20,        "The number of epoched to be trained.")
+add_arg('epoch',             int,   1,        "The number of epoched to be trained.") #20
 add_arg('output',            str,   "./output_dcgan", "The directory the model and the test result to be saved to.")
 add_arg('use_gpu',           bool,  True,       "Whether to use GPU to train.")
 add_arg('run_ce',           bool,  False,       "Whether to ce.")
@@ -99,9 +100,27 @@ def train(args):
     exe.run(fluid.default_startup_program())
 
 
-    
+    #download data
+    data_dir = os.path.join(BASE_DIR, 'data')
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    data_dir = os.path.join(data_dir, 'data65')
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    print("start to download image data...")
     image_filename = os.path.join(BASE_DIR, 'data/data65/train-images-idx3-ubyte.gz')
+    if not os.path.exists(image_filename):
+        r = requests.get('http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz')
+        with open(image_filename, 'wb') as f:
+            f.write(r.content)
+    print("start to downlaod image data...")
     label_filename = os.path.join(BASE_DIR, 'data/data65/train-labels-idx1-ubyte.gz')
+    if not os.path.exists(label_filename):
+        r = requests.get('http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz')
+        with open(label_filename, 'wb') as f:
+            f.write(r.content)
+    print("finished download")
+
     train_reader = reader_creator(image_filename, label_filename, 500)
     train_reader = batch(train_reader, args.batch_size, drop_last=False)
     NUM_TRAIN_TIMES_OF_DG = 2
@@ -170,26 +189,29 @@ def train(args):
                     pass_id, batch_id,
                     d_loss_n, dg_loss_n, check(generated_images))
                 print(msg)
-                plt.title(msg)
-                plt.savefig(
-                    os.path.join(BASE_DIR, 'result/dcgan/{:04d}_{:04d}.png'.format(pass_id,
-                                                  batch_id)),
-                    bbox_inches='tight')
-                plt.close(fig)
+                #plt.title(msg)
+                #plt.savefig(
+                #    os.path.join(BASE_DIR, 'result/dcgan/{:04d}_{:04d}.png'.format(pass_id,
+                #                                  batch_id)),
+                #    bbox_inches='tight')
+                #plt.close(fig)
                 
-        save_path = os.path.join(BASE_DIR, 'model/dcgan_model')
+        #save_path = os.path.join(BASE_DIR, 'model/dcgan_model')
         # delete old model file
-        shutil.rmtree(save_path, ignore_errors=True)
-        os.makedirs(save_path)
+        #shutil.rmtree(save_path, ignore_errors=True)
+        #os.makedirs(save_path)
         # save prediction model
-        fluid.io.save_inference_model(main_program=g_program_test, dirname=save_path, feeded_var_names=['noise'], target_vars=g_img, executor=exe)
+        #fluid.io.save_inference_model(main_program=g_program_test, dirname=save_path, feeded_var_names=['noise'], target_vars=g_img, executor=exe)
 
     if args.run_ce:
         print("kpis,dcgan_d_train_cost,{}".format(np.mean(losses[0])))
         print("kpis,dcgan_g_train_cost,{}".format(np.mean(losses[1])))
         print("kpis,dcgan_duration,{}".format(t_time / args.epoch))
 
-    RESULT_FILE = os.path.join(BASE_DIR, 'result/results_dcgan.txt')
+    result_dir = os.path.join(BASE_DIR, 'result')
+    if not os.path.exists(result_dir):
+        os.mkdir(result_dir)
+    RESULT_FILE = os.path.join(result_dir, 'results_dcgan.txt')
     with open(RESULT_FILE, 'a') as f:
         f.write('\n\n\n\ dcgan results:\n')
         f.write("kpis,dcgan_d_train_cost,{}".format(np.mean(losses[0])))
@@ -197,9 +219,9 @@ def train(args):
         f.write("kpis,dcgan_duration,{}".format(t_time))
 
     index = 0
-    while os.path.exists(os.path.join(BASE_DIR, 'result/minst_dcgan_tf_epoch_{}_{}.png'.format(args.epoch, index))):
+    while os.path.exists(os.path.join(result_dir, 'minst_dcgan_tf_epoch_{}_{}.png'.format(args.epoch, index))):
         index += 1
-    imgname = os.path.join(BASE_DIR,  'result/minst_dcgan_tf_epoch_{}_{}.png'.format(args.epoch, index))
+    imgname = os.path.join(result_dir,  'minst_dcgan_tf_epoch_{}_{}.png'.format(args.epoch, index))
     generated_images = exe.run(g_program_test,
                                 feed={'noise': const_n},
                                 fetch_list=[g_img])[0]

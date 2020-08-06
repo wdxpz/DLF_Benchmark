@@ -1,11 +1,11 @@
 import argparse
 import os
-from ..util import util
+from util import util
 import torch
-from .. import models
-from .. import data
+import models
+import data
 
-from ..config import DATA_DIR, DEMO_DIR, MODEL_DIR
+from config import DATA_DIR, DEMO_DIR, MODEL_DIR
 
 class BaseOptions():
     """This class defines options used during both training and test time.

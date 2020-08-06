@@ -18,8 +18,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from IPython.display import HTML
 
-from DCGAN.config import DCGAN_Config
-from DCGAN.network import Generator, Discriminator
+from config import DCGAN_Config
+from network import Generator, Discriminator
 
 # Set random seed for reproducibility
 manualSeed = 999

@@ -8,8 +8,8 @@ import torch.optim as optim
 import torchtext
 import torch.nn.functional as F
 
-from textclassify_bilstm.config import TextClassifier_Config
-from textclassify_bilstm.network import Network
+from config import TextClassifier_Config
+from network import Network
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')

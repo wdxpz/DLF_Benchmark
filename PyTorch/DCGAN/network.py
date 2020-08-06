@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from DCGAN.config import DCGAN_Config
+from config import DCGAN_Config
 
 
 

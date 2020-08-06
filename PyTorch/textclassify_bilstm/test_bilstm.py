@@ -1,4 +1,4 @@
-from textclassify_bert.textclassifier import TextClassifier
+from textclassifier import TextClassifier
 
 num_repeat = 3
 

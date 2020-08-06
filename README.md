@@ -9,7 +9,7 @@ These three frameworks are evaluated by the following tasks:
 * task2: text sentimental classification on IMDB movie reviews by bi-lstm
 * task3: text sentimental classification on IMDB movie reviews by bert
 * task4: image generation on MINST dataset by DCGAN
-* image translation on horse2zebra dataset by CycleGAN (Paddle implementation not included)
+* task5: image translation on horse2zebra dataset by CycleGAN (Paddle implementation not included)
 
 
 # Project Structure

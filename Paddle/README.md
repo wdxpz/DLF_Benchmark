@@ -16,6 +16,7 @@ python test_*.py
 
 # About tasks
 * task1 imagecalssification and task2 textclassification_bilstm
+
 For the implementaion of these two tasks are by notebook, please start the jupyter notebook in the conainter and then run the task in the notebook via a browser:
 ```
 cd /workspace/Paddle

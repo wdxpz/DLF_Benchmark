@@ -7,7 +7,7 @@ docker-compose up -d
 docker-compose exec dlf_benchmark_tf_container bash 
 ```
 
-* run the experiments
+* run the experiments in the container
 ```
 cd /workspace
 cd /an_project_like_imageclassification

@@ -7,7 +7,7 @@ docker-compose up -d
 docker-compose exec dlf_benchmark_paddle_container bash 
 ```
 
-* run the experiments
+* run the experiments in the container
 ```
 cd /workspace
 cd /an_project_like_imageclassification
@@ -22,5 +22,6 @@ cd /workspace/Paddle
 jupyter notebook --ip=0.0.0.0 --port=8080 --allow-root
 ```
 
-* task3 textclassification_bert 
+* task3 textclassification_bert
+
 Please run `python download_pretrained_model.py` to download bert pretrained model at first

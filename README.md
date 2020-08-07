@@ -1,5 +1,5 @@
 # Deep Learning Frameworks Performance Evaluation
-This project is targeted evaluated the performances of three deep learning frameworks on some different and typical deep nerual networks, including:
+This project is targeted to evaluate the performances of three deep learning frameworks on some different and typical deep nerual networks, including:
 1. Google TensorFlow
 2. Facebook PyTorch
 3. Baidu PaddlePaddle

@@ -52,7 +52,7 @@ sentencepiece==0.1.91
 six==1.13.0
 tensorboard==2.1.0
 tensorflow-estimator==2.1.0
-tensorflow-gpu==2.1.0
+tensorflow-gpu==2.5.3
 termcolor==1.1.0
 tokenizers==0.8.1rc1
 tqdm==4.48.0
